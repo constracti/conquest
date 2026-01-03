@@ -74,3 +74,19 @@ function post_float(string $key): float {
 		exit($key);
 	return $value;
 }
+
+function post_file_nullable(string $key): ?array {
+	if (!isset($_FILES[$key]))
+		return NULL;
+	$value = $_FILES[$key];
+	if ($value['error'] !== UPLOAD_ERR_OK)
+		exit($key);
+	return $value;
+}
+
+function post_file(string $key): array {
+	$value = post_file_nullable($key);
+	if (is_null($value))
+		exit($key);
+	return $value;
+}

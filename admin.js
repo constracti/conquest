@@ -319,11 +319,13 @@ function station_render() {
 								tag: 'input',
 								class: 'form-control form-control-sm',
 								value: station.capacity.toString(),
-								min: '1',
 								name: 'capacity',
 								placeholder: lexicon.capacity,
 								required: true,
 								type: 'number',
+								custom: element => {
+									element.min = '1';
+								},
 							}),
 						],
 					}),
@@ -422,7 +424,6 @@ function team_render() {
 					n({
 						tag: 'button',
 						class: 'btn btn-danger btn-sm m-1',
-						disabled: player_count !== 0,
 						click: async () => {
 							if (!confirm(`${lexicon.delete} ${team.name}${lexicon.question_mark}`))
 								return;
@@ -437,6 +438,9 @@ function team_render() {
 							refresh();
 						},
 						content: lexicon.delete,
+						custom: element => {
+							element.disabled = player_count !== 0;
+						},
 					}),
 				],
 			}),

@@ -27,7 +27,8 @@ DROP TABLE IF EXISTS `setup`;
 CREATE TABLE `setup` (
 	`id` varchar(255) NOT NULL,
 	`name` varchar(255) DEFAULT NULL,
-	`hash` varchar(255) NOT NULL
+	`hash` varchar(255) NOT NULL,
+	`map` varchar(255) DEFAULT NULL
 );
 
 DROP TABLE IF EXISTS `station`;

@@ -49,6 +49,56 @@ function stmt_bool(mysqli_stmt $stmt): bool {
 	return !is_null(stmt_item($stmt));
 }
 
+// file system
+
+function check_file(string $file_name, string $mime_type, int $max_size): bool {
+	// file_name
+	if (!file_exists($file_name))
+		exit('check_file: file_exists');
+	if (!is_file($file_name))
+		exit('check_file: is_file');
+	// mime_type
+	if ($mime_type !== 'image')
+		exit('check_file: mime_type');
+	$type = mime_content_type($file_name);
+	if ($type === FALSE)
+		exit('check_file: mime_content_type');
+	if (!str_starts_with($type, $mime_type . '/'))
+		return FALSE;
+	// max_size
+	$size = filesize($file_name);
+	if ($size === FALSE)
+		exit('check_file: filesize');
+	if ($size > $max_size)
+		return FALSE;
+	return TRUE;
+}
+
+function move_file(string $temp_path, string $upload_dir, string $file_name): string {
+	// temp_path
+	if (!is_uploaded_file($temp_path))
+		exit('move_file: temp_path');
+	// upload_dir
+	if ($upload_dir !== 'maps')
+		exit('move_file: upload_dir');
+	// file_name
+	if ($file_name !== basename($file_name))
+		exit('move_file: file_name');
+	if (str_starts_with($file_name, '.'))
+		exit('move_file: file_name');
+	// run
+	$file_path = sprintf('%s/%s', $upload_dir, $file_name);
+	if (!file_exists($upload_dir)) {
+		if (mkdir($upload_dir) === FALSE)
+			exit('move_file: mkdir');
+	} elseif (!is_dir($upload_dir)) {
+		exit('move_file: is_dir');
+	}
+	if (move_uploaded_file($temp_path, $file_path) === FALSE)
+		exit('move_file: move_uploaded_file');
+	return $file_path;
+}
+
 // config
 
 function config_get(string $name, mixed $default): mixed {
@@ -104,7 +154,7 @@ function get_game_state(DT $now, DT $game_start, DT $game_stop): string {
 
 function setup_select_by_id(string $id): ?array {
 	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name` FROM `setup` WHERE `id` = ?');
+	$stmt = $db->prepare('SELECT `id`, `name`, `map` FROM `setup` WHERE `id` = ?');
 	$stmt->bind_param('s', $id);
 	return stmt_item($stmt);
 }
@@ -126,7 +176,7 @@ function setup_matches(string $id, string $password): bool {
 	return password_verify($password, $hash);
 }
 
-function setup_insert(string $id, string $name, string $password): void {
+function setup_insert(string $id, ?string $name, string $password): void {
 	global $db;
 	$hash = password_hash($password, PASSWORD_DEFAULT);
 	$stmt = $db->prepare('INSERT INTO `setup` (`id`, `name`, `hash`) VALUES (?, ?, ?)');
@@ -135,10 +185,18 @@ function setup_insert(string $id, string $name, string $password): void {
 	$stmt->close();
 }
 
-function setup_update_name(string $id, string $name): void {
+function setup_update_name(string $id, ?string $name): void {
 	global $db;
 	$stmt = $db->prepare('UPDATE `setup` SET `name` = ? WHERE `id` = ?');
 	$stmt->bind_param('ss', $name, $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function setup_update_map(string $id, ?string $map): void {
+	global $db;
+	$stmt = $db->prepare('UPDATE `setup` SET `map` = ? WHERE `id` = ?');
+	$stmt->bind_param('ss', $map, $id);
 	$stmt->execute();
 	$stmt->close();
 }
@@ -479,10 +537,44 @@ if (is_post('setup_login')) {
 if (is_post('setup_update_name')) {
 	$id = post_slug('id');
 	$password = post_string('password');
-	$name = post_string_nullable('name');
 	if (!setup_matches($id, $password))
 		exit('password');
+	$name = post_string_nullable('name');
 	setup_update_name($id, $name);
+	json([
+		'setup' => setup_select_by_id($id),
+	]);
+}
+
+if (is_post('setup_insert_map')) {
+	$id = post_slug('id');
+	$password = post_string('password');
+	if (!setup_matches($id, $password))
+		exit('password');
+	$setup = setup_select_by_id($id);
+	if (!is_null($setup['map']))
+		exit('id');
+	$map = post_file('map');
+	if (!check_file($map['tmp_name'], 'image', 256 * 1024))
+		exit('map');
+	$map = move_file($map['tmp_name'], 'maps', sprintf('%s-%d.%s', $id, time(), pathinfo($map['name'], PATHINFO_EXTENSION)));
+	setup_update_map($id, $map);
+	json([
+		'setup' => setup_select_by_id($id),
+	]);
+}
+
+if (is_post('setup_delete_map')) {
+	$id = post_slug('id');
+	$password = post_string('password');
+	if (!setup_matches($id, $password))
+		exit('password');
+	$setup = setup_select_by_id($id);
+	if (is_null($setup['map']))
+		exit('id');
+	if (unlink($setup['map']) === FALSE)
+		exit('unlink');
+	setup_update_map($id, NULL);
 	json([
 		'setup' => setup_select_by_id($id),
 	]);
@@ -834,3 +926,5 @@ if (is_post('draw')) {
 		'player_list' => player_points($game_start, $game_stop),
 	]);
 }
+
+exit('action');

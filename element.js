@@ -3,17 +3,15 @@
  * @param {?string} options.tag
  * @param {?string} options.class
  * @param {?string} options.value
- * @param {?boolean} options.disabled
- * @param {?string} options.min
  * @param {?string} options.name
  * @param {?string} options.placeholder
  * @param {?boolean} options.required
  * @param {?{[k: string]: string}} options.style
- * @param {?string} options.title
  * @param {?string} options.type
  * @param {?{() => void}} options.click
  * @param {?{(event: Event) => void}} options.submit
  * @param {?(string|HTMLElement[])} options.content
+ * @param {?{(element: HTMLElement) => void}} options.custom
  * @returns {HTMLElement}
  */
 export function n(options) {
@@ -23,10 +21,6 @@ export function n(options) {
 		options.class = null;
 	if (options.value === undefined)
 		options.value = null;
-	if (options.disabled === undefined)
-		options.disabled = null;
-	if (options.min === undefined)
-		options.min = null;
 	if (options.name === undefined)
 		options.name = null;
 	if (options.placeholder === undefined)
@@ -35,8 +29,6 @@ export function n(options) {
 		options.required = null;
 	if (options.style === undefined)
 		options.style = null;
-	if (options.title === undefined)
-		options.title = null;
 	if (options.type === undefined)
 		options.type = null;
 	if (options.click === undefined)
@@ -45,6 +37,8 @@ export function n(options) {
 		options.submit = null;
 	if (options.content === undefined)
 		options.content = null;
+	if (options.custom === undefined)
+		options.custom = null;
 	const element = document.createElement(options.tag);
 	if (options.class !== null)
 		element.className = options.class;
@@ -57,10 +51,6 @@ export function n(options) {
 	}
 	if (options.value !== null)
 		element.value = options.value;
-	if (options.disabled !== null)
-		element.disabled = options.disabled;
-	if (options.min !== null)
-		element.min = options.min;
 	if (options.name !== null)
 		element.name = options.name;
 	if (options.placeholder !== null)
@@ -72,8 +62,6 @@ export function n(options) {
 			element.style[entry[0]] = entry[1];
 		});
 	}
-	if (options.title !== null)
-		element.title = options.title;
 	if (options.type !== null)
 		element.type = options.type;
 	if (options.click !== null) {
@@ -86,6 +74,8 @@ export function n(options) {
 			options.submit(event);
 		});
 	}
+	if (options.custom !== null)
+		options.custom(element);
 	return element;
 }
 

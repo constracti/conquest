@@ -95,7 +95,9 @@ function refresh() {
 							backgroundColor: team.color,
 							width: `${player.points / point_sum * 100}%`,
 						},
-						title: `${player.name} ${lexicon.from} ${team.name}`,
+						custom: element => {
+							element.title = `${player.name} ${lexicon.from} ${team.name}`;
+						},
 					});
 				}),
 			}));
