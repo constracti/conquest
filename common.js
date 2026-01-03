@@ -42,13 +42,24 @@ import { lexicon } from './lexicon.js';
  * @property {Success[]} success_list
  */
 
-(title => {
-	document.title = title;
-	for (const element of document.getElementsByTagName('h1'))
-		element.innerHTML = title;
-})(lexicon.title);
-
 export const api = new API();
+
+/**
+ * 
+ * @param {string} title
+ */
+function set_title(title) {
+	document.title = title;
+	Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
+		h1.innerHTML = app_name;
+	});
+}
+
+/**
+ * @type {string}
+ */
+const app_name = await api.get('app_name');
+set_title(app_name);
 
 /**
  * css expression resulting in a contrasting black or white color,

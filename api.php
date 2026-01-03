@@ -100,6 +100,41 @@ function get_game_state(DT $now, DT $game_start, DT $game_stop): string {
 	return 'running';
 }
 
+// setup
+
+function setup_select_by_id(string $id): ?array {
+	global $db;
+	$stmt = $db->prepare('SELECT `id`, `name` FROM `setup` WHERE `id` = ?');
+	$stmt->bind_param('s', $id);
+	return stmt_item($stmt);
+}
+
+function setup_exists(string $id): bool {
+	global $db;
+	$stmt = $db->prepare('SELECT `id` FROM `setup` WHERE `id` = ?');
+	$stmt->bind_param('s', $id);
+	return stmt_bool($stmt);
+}
+
+function setup_matches(string $id, string $password): bool {
+	global $db;
+	$stmt = $db->prepare('SELECT `hash` FROM `setup` WHERE `id` = ?');
+	$stmt->bind_param('s', $id);
+	$hash = stmt_cell($stmt);
+	if (is_null($hash))
+		return FALSE;
+	return password_verify($password, $hash);
+}
+
+function setup_insert(string $id, string $name, string $password): void {
+	global $db;
+	$hash = password_hash($password, PASSWORD_DEFAULT);
+	$stmt = $db->prepare('INSERT INTO `setup` (`id`, `name`, `hash`) VALUES (?, ?, ?)');
+	$stmt->bind_param('sss', $id, $name, $hash);
+	$stmt->execute();
+	$stmt->close();
+}
+
 // place
 
 function place_list(): array {
@@ -395,53 +430,7 @@ function json(mixed $mixed): void {
 	exit(json_encode($mixed));
 }
 
-function get_string_nullable(string $key): ?string {
-	if (!isset($_GET[$key]))
-		return NULL;
-	$value = $_GET[$key];
-	if (!is_string($value))
-		exit($key);
-	return $value;
-}
-
-function post_string(string $key): string {
-	if (!isset($_POST[$key]))
-		exit($key);
-	$value = $_POST[$key];
-	if (!is_string($value))
-		exit($key);
-	return $value;
-}
-
-function post_int_nullable(string $key): ?int {
-	if (!isset($_POST[$key]))
-		return NULL;
-	$value = $_POST[$key];
-	if (!is_string($value))
-		exit($key);
-	if (empty($value))
-		return NULL;
-	$value = filter_var($value, FILTER_VALIDATE_INT);
-	if ($value === FALSE)
-		exit($key);
-	return $value;
-}
-
-function post_int(string $key): int {
-	$value = post_string($key);
-	$value = filter_var($value, FILTER_VALIDATE_INT);
-	if ($value === FALSE)
-		exit($key);
-	return $value;
-}
-
-function post_float(string $key): float {
-	$value = post_string($key);
-	$value = filter_var($value, FILTER_VALIDATE_FLOAT);
-	if ($value === FALSE)
-		exit($key);
-	return $value;
-}
+require_once 'request.php';
 
 function is_get(string $action): bool {
 	return $_SERVER['REQUEST_METHOD'] === 'GET' && get_string_nullable('action') === $action;
@@ -449,6 +438,34 @@ function is_get(string $action): bool {
 
 function is_post(string $action): bool {
 	return $_SERVER['REQUEST_METHOD'] === 'POST' && get_string_nullable('action') === $action;
+}
+
+if (is_get('app_name')) {
+	json(APP_NAME);
+}
+
+if (is_post('setup_register')) {
+	$id = post_slug('id');
+	if (setup_exists($id))
+		json(NULL);
+	$name = post_string_nullable('name');
+	$password = post_string('password');
+	setup_insert($id, $name, $password);
+	json([
+		'setup' => setup_select_by_id($id),
+	]);
+}
+
+if (is_post('setup_login')) {
+	$id = post_slug('id');
+	if (!setup_exists($id))
+		json('id');
+	$password = post_string('password');
+	if (!setup_matches($id, $password))
+		json('password');
+	json([
+		'setup' => setup_select_by_id($id),
+	]);
 }
 
 if (is_post('admin_login')) {

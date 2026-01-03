@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="author" content="constracti">
+		<title>The Station War</title>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+	</head>
+	<body class="container d-flex flex-column p-2">
+		<h1 class="m-2">The Station War</h1>
+		<h2 class="m-2">Setup</h2>
+		<form class="m-2 border rounded d-none d-flex flex-column p-2" id="login-form">
+			<h3 class="m-2">Login</h3>
+			<div class="m-2">
+				<label class="form-label" for="login-id">Identifier</label>
+				<span class="text-danger">*</span>
+				<input class="form-control" id="login-id" name="id" required="required" pattern="[\-a-z0-9]{1,255}">
+				<div class="form-text">Only small latin letters, arithmetic digits and dashes ("-") are allowed.</div>
+			</div>
+			<div class="m-2">
+				<label class="form-label" for="login-password">Password</label>
+				<span class="text-danger">*</span>
+				<input class="form-control" id="login-password" name="password" type="password" required="required">
+			</div>
+			<div class="d-flex flex-row justify-content-between align-items-center">
+				<div class="d-flex flex-row align-items-center">
+					<button class="m-2 btn btn-primary">Submit</button>
+					<div class="m-2 spinner-border d-none" id="login-spinner"></div>
+				</div>
+				<button type="button" class="m-2 btn btn-link" id="register-button">Register</button>
+			</div>
+		</form>
+		<form class="m-2 border rounded d-none d-flex flex-column p-2" id="register-form">
+			<h3 class="m-2">Register</h3>
+			<div class="m-2">
+				<label class="form-label" for="register-id">Identifier</label>
+				<span class="text-danger">*</span>
+				<input class="form-control" id="register-id" name="id" required="required" pattern="[\-a-z0-9]{1,255}">
+				<div class="form-text">Only small latin letters, arithmetic digits and dashes ("-") are allowed.</div>
+			</div>
+			<div class="m-2">
+				<label class="form-label" for="register-name">Name</label>
+				<input class="form-control" id="register-name" name="name">
+			</div>
+			<div class="m-2">
+				<label class="form-label" for="register-password">Password</label>
+				<span class="text-danger">*</span>
+				<input class="form-control" id="register-password" name="password" type="password" required="required">
+			</div>
+			<div class="m-2">
+				<label class="form-label" for="register-spellcheck">Retype Password</label>
+				<span class="text-danger">*</span>
+				<input class="form-control" id="register-spellcheck" type="password">
+			</div>
+			<div class="d-flex flex-row justify-content-between align-items-center">
+				<div class="d-flex flex-row align-items-center">
+					<button class="m-2 btn btn-primary">Submit</button>
+					<div class="m-2 spinner-border d-none" id="register-spinner"></div>
+				</div>
+				<button type="button" class="m-2 btn btn-link" id="login-button">Login</button>
+			</div>
+		</form>
+		<div class="d-none d-flex flex-column" id="main-div">
+			<div class="d-flex flex-row justify-content-between align-items-center">
+				<h3 class="m-2" id="name-heading">main</h3>
+				<button class="m-2 btn btn-secondary" id="logout-button">Logout</button>
+			</div>
+		</div>
+		<script src="/color-mode.js"></script>
+		<script type="module" src="./setup.js"></script>
+	</body>
+</html>
