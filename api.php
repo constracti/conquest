@@ -135,6 +135,14 @@ function setup_insert(string $id, string $name, string $password): void {
 	$stmt->close();
 }
 
+function setup_update_name(string $id, string $name): void {
+	global $db;
+	$stmt = $db->prepare('UPDATE `setup` SET `name` = ? WHERE `id` = ?');
+	$stmt->bind_param('ss', $name, $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
 // place
 
 function place_list(): array {
@@ -463,6 +471,18 @@ if (is_post('setup_login')) {
 	$password = post_string('password');
 	if (!setup_matches($id, $password))
 		json('password');
+	json([
+		'setup' => setup_select_by_id($id),
+	]);
+}
+
+if (is_post('setup_update_name')) {
+	$id = post_slug('id');
+	$password = post_string('password');
+	$name = post_string_nullable('name');
+	if (!setup_matches($id, $password))
+		exit('password');
+	setup_update_name($id, $name);
 	json([
 		'setup' => setup_select_by_id($id),
 	]);

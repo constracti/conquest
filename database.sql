@@ -23,6 +23,13 @@ CREATE TABLE `player` (
 	`block` tinyint(1) NOT NULL
 );
 
+DROP TABLE IF EXISTS `setup`;
+CREATE TABLE `setup` (
+	`id` varchar(255) NOT NULL,
+	`name` varchar(255) DEFAULT NULL,
+	`hash` varchar(255) NOT NULL
+);
+
 DROP TABLE IF EXISTS `station`;
 CREATE TABLE `station` (
 	`id` int(11) NOT NULL,
@@ -58,6 +65,9 @@ ALTER TABLE `place`
 ALTER TABLE `player`
 	ADD PRIMARY KEY (`id`),
 	ADD KEY `team` (`team`);
+
+ALTER TABLE `setup`
+	ADD PRIMARY KEY (`id`);
 
 ALTER TABLE `station`
 	ADD PRIMARY KEY (`id`),

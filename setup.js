@@ -1,4 +1,5 @@
 import { api } from './common.js';
+import { n } from './element.js';
 
 /**
  * @typedef Setup
@@ -8,7 +9,7 @@ import { api } from './common.js';
  */
 
 /**
- * @typedef LoginSuccess
+ * @typedef Success
  * @type {object}
  * @property {Setup} setup
  */
@@ -17,6 +18,7 @@ import { api } from './common.js';
  * @typedef State
  * @type {object}
  * @property {Setup} setup
+ * @property {string} password
  */
 
 /**
@@ -34,7 +36,68 @@ function render() {
 	login_form.classList.add('d-none');
 	register_form.classList.add('d-none');
 	main_div.classList.remove('d-none');
-	name_heading.innerHTML = state.setup.name; // TODO might be null
+	id_block.innerHTML = `<code>${state.setup.id}</code>`;
+	name_block.innerHTML = '';
+	const element_list = [
+		n({
+			class: 'm-2 flex-grow-1',
+			content: state.setup.name,
+		}),
+		n({
+			tag: 'button',
+			class: 'm-2 btn btn-secondary',
+			type: 'button',
+			click: () => {
+				element_list.forEach(element => element.classList.toggle('d-none'));
+			},
+			content: 'Edit',
+		}),
+		n({
+			tag: 'form',
+			class: 'd-none flex-grow-1 d-flex flex-row align-items-center',
+			submit: async event => {
+				event.preventDefault();
+				const form_data = new FormData(event.currentTarget);
+				form_data.append('id', state.setup.id);
+				form_data.append('password', state.password);
+				/**
+				 * @type {Success}
+				 */
+				const result = await api.post('setup_update_name', form_data);
+				state.setup = result.setup;
+				render();
+			},
+			content: [
+				n({
+					class: 'm-2 flex-grow-1',
+					content: [
+						n({
+							tag: 'input',
+							class: 'form-control',
+							value: state.setup.name ?? '',
+							name: 'name',
+						}),
+					],
+				}),
+				n({
+					tag: 'button',
+					class: 'm-2 btn btn-primary',
+					type: 'submit',
+					content: 'Submit',
+				}),
+				n({
+					tag: 'button',
+					class: 'm-2 btn btn-secondary',
+					type: 'button',
+					click: () => {
+						element_list.forEach(element => element.classList.toggle('d-none'));
+					},
+					content: 'Cancel',
+				}),
+			],
+		}),
+	];
+	name_block.append(...element_list);
 }
 
 /**
@@ -47,9 +110,9 @@ login_form.addEventListener('submit', async event => {
 	if (!login_spinner.classList.contains('d-none'))
 		return;
 	login_spinner.classList.remove('d-none');
-	const form_data = new FormData(login_form);
+	const form_data = new FormData(event.currentTarget);
 	/**
-	 * @type {LoginSuccess|string}
+	 * @type {Success|string}
 	 */
 	const result = await api.post('setup_login', form_data);
 	if (typeof(result) === 'string') {
@@ -66,6 +129,7 @@ login_form.addEventListener('submit', async event => {
 	localStorage.setItem('password', form_data.get('password'));
 	state = {
 		setup: result.setup,
+		password: form_data.get('password'),
 	};
 	render();
 });
@@ -104,10 +168,11 @@ register_form.addEventListener('submit', async event => {
 		spellcheck_input.focus();
 		return;
 	}
+	const form_data = new FormData(event.currentTarget);
 	/**
-	 * @type {LoginSuccess|null}
+	 * @type {Success|null}
 	 */
-	const result = await api.post('setup_register', new FormData(register_form));
+	const result = await api.post('setup_register', form_data);
 	if (result === null) {
 		alert('Identifier is not available.');
 		register_spinner.classList.add('d-none');
@@ -119,6 +184,7 @@ register_form.addEventListener('submit', async event => {
 	localStorage.setItem('password', form_data.get('password'));
 	state = {
 		setup: result.setup,
+		password: form_data.get('password'),
 	};
 	render();
 });
@@ -139,9 +205,14 @@ document.getElementById('login-button').addEventListener('click', () => {
 const main_div = document.getElementById('main-div');
 
 /**
- * @type {HTMLHeadingElement}
+ * @type {HTMLSpanElement}
  */
-const name_heading = document.getElementById('name-heading');
+const id_block = document.getElementById('id-block');
+
+/**
+ * @type {HTMLDivElement}
+ */
+const name_block = document.getElementById('name-block');
 
 document.getElementById('logout-button').addEventListener('click', () => {
 	localStorage.removeItem('id');
@@ -161,7 +232,7 @@ document.getElementById('logout-button').addEventListener('click', () => {
 	form_data.set('id', id);
 	form_data.set('password', password);
 	/**
-	 * @type {LoginSuccess|string}
+	 * @type {Success|string}
 	 */
 	const result = await api.post('setup_login', form_data);
 	if (typeof(result) === 'string') {
@@ -170,6 +241,7 @@ document.getElementById('logout-button').addEventListener('click', () => {
 	}
 	state = {
 		setup: result.setup,
+		password: password,
 	};
 	render();
 })();
