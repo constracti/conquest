@@ -2,7 +2,7 @@ import { api } from './common.js';
 import { n } from './element.js';
 
 /**
- * @typedef Setup
+ * @typedef Game
  * @type {object}
  * @property {string} id
  * @property {?string} name
@@ -12,13 +12,13 @@ import { n } from './element.js';
 /**
  * @typedef Success
  * @type {object}
- * @property {Setup} setup
+ * @property {Game} game
  */
 
 /**
  * @typedef State
  * @type {object}
- * @property {Setup} setup
+ * @property {Game} game
  * @property {string} password
  */
 
@@ -37,7 +37,7 @@ function render() {
 	login_form.classList.add('d-none');
 	register_form.classList.add('d-none');
 	main_div.classList.remove('d-none');
-	id_block.innerHTML = `<code>${state.setup.id}</code>`;
+	id_block.innerHTML = `<code>${state.game.id}</code>`;
 	render_name();
 	render_map();
 }
@@ -47,7 +47,7 @@ function render_name() {
 	const element_list = [
 		n({
 			class: 'm-2 flex-grow-1',
-			content: state.setup.name,
+			content: state.game.name,
 		}),
 		n({
 			tag: 'button',
@@ -67,14 +67,14 @@ function render_name() {
 					return;
 				spinner_div.classList.remove('d-none');
 				const form_data = new FormData(event.currentTarget);
-				form_data.append('id', state.setup.id);
+				form_data.append('id', state.game.id);
 				form_data.append('password', state.password);
 				/**
 				 * @type {Success}
 				 */
-				const result = await api.post('setup_update_name', form_data);
+				const result = await api.post('game_update_name', form_data);
 				spinner_div.classList.add('d-none');
-				state.setup = result.setup;
+				state.game = result.game;
 				render();
 			},
 			content: [
@@ -84,7 +84,7 @@ function render_name() {
 						n({
 							tag: 'input',
 							class: 'form-control',
-							value: state.setup.name ?? '',
+							value: state.game.name ?? '',
 							name: 'name',
 							placeholder: 'Name',
 						}),
@@ -117,19 +117,19 @@ function render_map() {
 		n({
 			class: 'flex-grow-1',
 			content: [
-				state.setup.map === null ? n({}) : n({
+				state.game.map === null ? n({}) : n({
 					tag: 'img',
 					class: 'm-2',
 					style: {
 						maxWidth: '360px',
 					},
 					custom: element => {
-						element.src = state.setup.map;
+						element.src = state.game.map;
 					},
 				}),
 			],
 		}),
-		state.setup.map === null ? n({
+		state.game.map === null ? n({
 			tag: 'button',
 			class: 'm-2 btn btn-secondary',
 			type: 'button',
@@ -150,14 +150,14 @@ function render_map() {
 					return;
 				}
 				const form_data = new FormData();
-				form_data.append('id', state.setup.id);
+				form_data.append('id', state.game.id);
 				form_data.append('password', state.password);
 				/**
 				 * @type {Success}
 				 */
-				const result = await api.post('setup_delete_map', form_data);
+				const result = await api.post('game_delete_map', form_data);
 				spinner_div.classList.add('d-none');
-				state.setup = result.setup;
+				state.game = result.game;
 				render();
 			},
 			content: 'Delete',
@@ -171,7 +171,7 @@ function render_map() {
 					return;
 				spinner_div.classList.remove('d-none');
 				const form_data = new FormData(event.currentTarget);
-				form_data.append('id', state.setup.id);
+				form_data.append('id', state.game.id);
 				form_data.append('password', state.password);
 				const file = form_data.get('map');
 				const size_limit_kb = 256;
@@ -183,9 +183,9 @@ function render_map() {
 				/**
 				 * @type {Success}
 				 */
-				const result = await api.post('setup_insert_map', form_data);
+				const result = await api.post('game_insert_map', form_data);
 				spinner_div.classList.add('d-none');
-				state.setup = result.setup;
+				state.game = result.game;
 				render();
 			},
 			content: [
@@ -244,7 +244,7 @@ login_form.addEventListener('submit', async event => {
 	/**
 	 * @type {Success|string}
 	 */
-	const result = await api.post('setup_login', form_data);
+	const result = await api.post('game_login', form_data);
 	if (typeof(result) === 'string') {
 		if (result !== 'password')
 			alert('Identifier is not found.');
@@ -258,7 +258,7 @@ login_form.addEventListener('submit', async event => {
 	localStorage.setItem('id', form_data.get('id'));
 	localStorage.setItem('password', form_data.get('password'));
 	state = {
-		setup: result.setup,
+		game: result.game,
 		password: form_data.get('password'),
 	};
 	render();
@@ -297,7 +297,7 @@ register_form.addEventListener('submit', async event => {
 	/**
 	 * @type {Success|null}
 	 */
-	const result = await api.post('setup_register', form_data);
+	const result = await api.post('game_register', form_data);
 	if (result === null) {
 		alert('Identifier is not available.');
 		spinner_div.classList.add('d-none');
@@ -308,7 +308,7 @@ register_form.addEventListener('submit', async event => {
 	localStorage.setItem('id', form_data.get('id'));
 	localStorage.setItem('password', form_data.get('password'));
 	state = {
-		setup: result.setup,
+		game: result.game,
 		password: form_data.get('password'),
 	};
 	render();
@@ -359,13 +359,13 @@ document.getElementById('logout-button').addEventListener('click', () => {
 	/**
 	 * @type {Success|string}
 	 */
-	const result = await api.post('setup_login', form_data);
+	const result = await api.post('game_login', form_data);
 	if (typeof(result) === 'string') {
 		render();
 		return;
 	}
 	state = {
-		setup: result.setup,
+		game: result.game,
 		password: password,
 	};
 	render();
