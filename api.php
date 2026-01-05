@@ -150,25 +150,25 @@ function get_game_state(DT $now, DT $game_start, DT $game_stop): string {
 	return 'running';
 }
 
-// setup
+// game
 
-function setup_select_by_id(string $id): ?array {
+function game_select_by_id(string $id): ?array {
 	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name`, `map` FROM `setup` WHERE `id` = ?');
+	$stmt = $db->prepare('SELECT `id`, `name`, `map` FROM `game` WHERE `id` = ?');
 	$stmt->bind_param('s', $id);
 	return stmt_item($stmt);
 }
 
-function setup_exists(string $id): bool {
+function game_exists(string $id): bool {
 	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `setup` WHERE `id` = ?');
+	$stmt = $db->prepare('SELECT `id` FROM `game` WHERE `id` = ?');
 	$stmt->bind_param('s', $id);
 	return stmt_bool($stmt);
 }
 
-function setup_matches(string $id, string $password): bool {
+function game_matches(string $id, string $password): bool {
 	global $db;
-	$stmt = $db->prepare('SELECT `hash` FROM `setup` WHERE `id` = ?');
+	$stmt = $db->prepare('SELECT `hash` FROM `game` WHERE `id` = ?');
 	$stmt->bind_param('s', $id);
 	$hash = stmt_cell($stmt);
 	if (is_null($hash))
@@ -176,26 +176,26 @@ function setup_matches(string $id, string $password): bool {
 	return password_verify($password, $hash);
 }
 
-function setup_insert(string $id, ?string $name, string $password): void {
+function game_insert(string $id, ?string $name, string $password): void {
 	global $db;
 	$hash = password_hash($password, PASSWORD_DEFAULT);
-	$stmt = $db->prepare('INSERT INTO `setup` (`id`, `name`, `hash`) VALUES (?, ?, ?)');
+	$stmt = $db->prepare('INSERT INTO `game` (`id`, `name`, `hash`) VALUES (?, ?, ?)');
 	$stmt->bind_param('sss', $id, $name, $hash);
 	$stmt->execute();
 	$stmt->close();
 }
 
-function setup_update_name(string $id, ?string $name): void {
+function game_update_name(string $id, ?string $name): void {
 	global $db;
-	$stmt = $db->prepare('UPDATE `setup` SET `name` = ? WHERE `id` = ?');
+	$stmt = $db->prepare('UPDATE `game` SET `name` = ? WHERE `id` = ?');
 	$stmt->bind_param('ss', $name, $id);
 	$stmt->execute();
 	$stmt->close();
 }
 
-function setup_update_map(string $id, ?string $map): void {
+function game_update_map(string $id, ?string $map): void {
 	global $db;
-	$stmt = $db->prepare('UPDATE `setup` SET `map` = ? WHERE `id` = ?');
+	$stmt = $db->prepare('UPDATE `game` SET `map` = ? WHERE `id` = ?');
 	$stmt->bind_param('ss', $map, $id);
 	$stmt->execute();
 	$stmt->close();
@@ -510,73 +510,73 @@ if (is_get('app_name')) {
 	json(APP_NAME);
 }
 
-if (is_post('setup_register')) {
+if (is_post('game_register')) {
 	$id = post_slug('id');
-	if (setup_exists($id))
+	if (game_exists($id))
 		json(NULL);
 	$name = post_string_nullable('name');
 	$password = post_string('password');
-	setup_insert($id, $name, $password);
+	game_insert($id, $name, $password);
 	json([
-		'setup' => setup_select_by_id($id),
+		'game' => game_select_by_id($id),
 	]);
 }
 
-if (is_post('setup_login')) {
+if (is_post('game_login')) {
 	$id = post_slug('id');
-	if (!setup_exists($id))
+	if (!game_exists($id))
 		json('id');
 	$password = post_string('password');
-	if (!setup_matches($id, $password))
+	if (!game_matches($id, $password))
 		json('password');
 	json([
-		'setup' => setup_select_by_id($id),
+		'game' => game_select_by_id($id),
 	]);
 }
 
-if (is_post('setup_update_name')) {
+if (is_post('game_update_name')) {
 	$id = post_slug('id');
 	$password = post_string('password');
-	if (!setup_matches($id, $password))
+	if (!game_matches($id, $password))
 		exit('password');
 	$name = post_string_nullable('name');
-	setup_update_name($id, $name);
+	game_update_name($id, $name);
 	json([
-		'setup' => setup_select_by_id($id),
+		'game' => game_select_by_id($id),
 	]);
 }
 
-if (is_post('setup_insert_map')) {
+if (is_post('game_insert_map')) {
 	$id = post_slug('id');
 	$password = post_string('password');
-	if (!setup_matches($id, $password))
+	if (!game_matches($id, $password))
 		exit('password');
-	$setup = setup_select_by_id($id);
-	if (!is_null($setup['map']))
+	$game = game_select_by_id($id);
+	if (!is_null($game['map']))
 		exit('id');
 	$map = post_file('map');
 	if (!check_file($map['tmp_name'], 'image', 256 * 1024))
 		exit('map');
 	$map = move_file($map['tmp_name'], 'maps', sprintf('%s-%d.%s', $id, time(), pathinfo($map['name'], PATHINFO_EXTENSION)));
-	setup_update_map($id, $map);
+	game_update_map($id, $map);
 	json([
-		'setup' => setup_select_by_id($id),
+		'game' => game_select_by_id($id),
 	]);
 }
 
-if (is_post('setup_delete_map')) {
+if (is_post('game_delete_map')) {
 	$id = post_slug('id');
 	$password = post_string('password');
-	if (!setup_matches($id, $password))
+	if (!game_matches($id, $password))
 		exit('password');
-	$setup = setup_select_by_id($id);
-	if (is_null($setup['map']))
+	$game = game_select_by_id($id);
+	if (is_null($game['map']))
 		exit('id');
-	if (unlink($setup['map']) === FALSE)
+	if (unlink($game['map']) === FALSE)
 		exit('unlink');
-	setup_update_map($id, NULL);
+	game_update_map($id, NULL);
 	json([
-		'setup' => setup_select_by_id($id),
+		'game' => game_select_by_id($id),
 	]);
 }
 

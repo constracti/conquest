@@ -4,6 +4,14 @@ CREATE TABLE `config` (
 	`value` text NOT NULL
 );
 
+DROP TABLE IF EXISTS `game`;
+CREATE TABLE `game` (
+	`id` varchar(255) NOT NULL,
+	`name` varchar(255) DEFAULT NULL,
+	`hash` varchar(255) NOT NULL,
+	`map` varchar(255) DEFAULT NULL
+);
+
 DROP TABLE IF EXISTS `place`;
 CREATE TABLE `place` (
 	`id` int(11) NOT NULL,
@@ -21,14 +29,6 @@ CREATE TABLE `player` (
 	`name` varchar(255) NOT NULL,
 	`team` int(11) NOT NULL,
 	`block` tinyint(1) NOT NULL
-);
-
-DROP TABLE IF EXISTS `setup`;
-CREATE TABLE `setup` (
-	`id` varchar(255) NOT NULL,
-	`name` varchar(255) DEFAULT NULL,
-	`hash` varchar(255) NOT NULL,
-	`map` varchar(255) DEFAULT NULL
 );
 
 DROP TABLE IF EXISTS `station`;
@@ -60,15 +60,15 @@ CREATE TABLE `team` (
 ALTER TABLE `config`
 	ADD PRIMARY KEY (`name`);
 
+ALTER TABLE `game`
+	ADD PRIMARY KEY (`id`);
+
 ALTER TABLE `place`
 	ADD PRIMARY KEY (`id`);
 
 ALTER TABLE `player`
 	ADD PRIMARY KEY (`id`),
 	ADD KEY `team` (`team`);
-
-ALTER TABLE `setup`
-	ADD PRIMARY KEY (`id`);
 
 ALTER TABLE `station`
 	ADD PRIMARY KEY (`id`),
