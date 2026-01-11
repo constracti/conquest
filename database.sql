@@ -31,6 +31,14 @@ CREATE TABLE `player` (
 	`block` tinyint(1) NOT NULL
 );
 
+DROP TABLE IF EXISTS `polygon`;
+CREATE TABLE `polygon` (
+	`id` int(11) NOT NULL,
+	`name` varchar(255) NOT NULL,
+	`content` text DEFAULT NULL,
+	`game` varchar(255) NOT NULL
+);
+
 DROP TABLE IF EXISTS `station`;
 CREATE TABLE `station` (
 	`id` int(11) NOT NULL,
@@ -70,6 +78,10 @@ ALTER TABLE `player`
 	ADD PRIMARY KEY (`id`),
 	ADD KEY `team` (`team`);
 
+ALTER TABLE `polygon`
+	ADD PRIMARY KEY (`id`),
+	ADD KEY `game` (`game`);
+
 ALTER TABLE `station`
 	ADD PRIMARY KEY (`id`),
 	ADD KEY `place` (`place`);
@@ -86,6 +98,9 @@ ALTER TABLE `team`
 ALTER TABLE `place`
 	MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+ALTER TABLE `polygon`
+	MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 ALTER TABLE `station`
 	MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
@@ -98,6 +113,9 @@ ALTER TABLE `team`
 
 ALTER TABLE `player`
 	ADD CONSTRAINT `player_ibfk_1` FOREIGN KEY (`team`) REFERENCES `team` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `polygon`
+	ADD CONSTRAINT `polygon_ibfk_1` FOREIGN KEY (`game`) REFERENCES `game` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE `station`
 	ADD CONSTRAINT `station_ibfk_1` FOREIGN KEY (`place`) REFERENCES `place` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
