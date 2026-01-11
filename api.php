@@ -201,6 +201,46 @@ function game_update_map(string $id, ?string $map): void {
 	$stmt->close();
 }
 
+// polygon
+
+function polygon_select_by_game(string $game): array {
+	global $db;
+	$stmt = $db->prepare('SELECT `id`, `name`, `content` FROM `polygon` WHERE `game` = ? ORDER BY `name` ASC, `id` ASC');
+	$stmt->bind_param('s', $game);
+	return stmt_list($stmt);
+}
+
+function polygon_belongs_to_game(int $id, string $game): bool {
+	global $db;
+	$stmt = $db->prepare('SELECT `id` FROM `polygon` WHERE `id` = ? AND `game` = ?');
+	$stmt->bind_param('is', $id, $game);
+	return stmt_bool($stmt);
+}
+
+function polygon_insert(string $name, ?string $content, string $game): void {
+	global $db;
+	$stmt = $db->prepare('INSERT INTO `polygon` (`name`, `content`, `game`) VALUES (?, ?, ?)');
+	$stmt->bind_param('sss', $name, $content, $game);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function polygon_update(int $id, string $name, ?string $content): void {
+	global $db;
+	$stmt = $db->prepare('UPDATE `polygon` SET `name` = ?, `content` = ? WHERE `id` = ?');
+	$stmt->bind_param('ssi', $name, $content, $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function polygon_delete(int $id): void {
+	global $db;
+	$stmt = $db->prepare('DELETE FROM `polygon` WHERE `id` = ?');
+	$stmt->bind_param('i', $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
 // place
 
 function place_list(): array {
@@ -519,6 +559,7 @@ if (is_post('game_register')) {
 	game_insert($id, $name, $password);
 	json([
 		'game' => game_select_by_id($id),
+		'polygon_list' => polygon_select_by_game($id),
 	]);
 }
 
@@ -531,8 +572,11 @@ if (is_post('game_login')) {
 		json('password');
 	json([
 		'game' => game_select_by_id($id),
+		'polygon_list' => polygon_select_by_game($id),
 	]);
 }
+
+// TODO is_post('game_delete')
 
 if (is_post('game_update_name')) {
 	$id = post_slug('id');
@@ -541,9 +585,7 @@ if (is_post('game_update_name')) {
 		exit('password');
 	$name = post_string_nullable('name');
 	game_update_name($id, $name);
-	json([
-		'game' => game_select_by_id($id),
-	]);
+	json(game_select_by_id($id));
 }
 
 if (is_post('game_insert_map')) {
@@ -559,9 +601,7 @@ if (is_post('game_insert_map')) {
 		exit('map');
 	$map = move_file($map['tmp_name'], 'maps', sprintf('%s-%d.%s', $id, time(), pathinfo($map['name'], PATHINFO_EXTENSION)));
 	game_update_map($id, $map);
-	json([
-		'game' => game_select_by_id($id),
-	]);
+	json(game_select_by_id($id));
 }
 
 if (is_post('game_delete_map')) {
@@ -575,9 +615,44 @@ if (is_post('game_delete_map')) {
 	if (unlink($game['map']) === FALSE)
 		exit('unlink');
 	game_update_map($id, NULL);
-	json([
-		'game' => game_select_by_id($id),
-	]);
+	json(game_select_by_id($id));
+}
+
+if (is_post('polygon_insert')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$name = post_string('name');
+	$content = post_string_nullable('content');
+	polygon_insert($name, $content, $game);
+	json(polygon_select_by_game($game));
+}
+
+if (is_post('polygon_update')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$id = post_int('id');
+	if (!polygon_belongs_to_game($id, $game))
+		exit('id');
+	$name = post_string('name');
+	$content = post_string_nullable('content');
+	polygon_update($id, $name, $content);
+	json(polygon_select_by_game($game));
+}
+
+if (is_post('polygon_delete')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$id = post_int('id');
+	if (!polygon_belongs_to_game($id, $game))
+		exit('id');
+	polygon_delete($id);
+	json(polygon_select_by_game($game));
 }
 
 if (is_post('admin_login')) {

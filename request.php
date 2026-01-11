@@ -17,7 +17,7 @@ function post_string_nullable(string $key): ?string {
 	$value = $_POST[$key];
 	if (!is_string($value))
 		exit($key);
-	if (mb_strlen($key) === 0)
+	if (mb_strlen($value) === 0)
 		return NULL;
 	return $value;
 }
