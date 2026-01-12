@@ -944,9 +944,27 @@ const name_block = document.getElementById('name-block');
 const map_block = document.getElementById('map-block');
 
 /**
+ * @type {HTMLButtonElement}
+ */
+const polygon_toggle = document.getElementById('polygon-toggle');
+polygon_toggle.addEventListener('click', () => {
+	polygon_list.classList.toggle('d-none');
+	[polygon_toggle.innerHTML, polygon_toggle.dataset.toggle] = [polygon_toggle.dataset.toggle, polygon_toggle.innerHTML];
+});
+
+/**
  * @type {HTMLDivElement}
  */
 const polygon_list = document.getElementById('polygon-list');
+
+/**
+ * @type {HTMLButtonElement}
+ */
+const station_toggle = document.getElementById('station-toggle');
+station_toggle.addEventListener('click', () => {
+	station_list.classList.toggle('d-none');
+	[station_toggle.innerHTML, station_toggle.dataset.toggle] = [station_toggle.dataset.toggle, station_toggle.innerHTML];
+});
 
 /**
  * @type {HTMLDivElement}
