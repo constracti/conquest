@@ -241,6 +241,53 @@ function polygon_delete(int $id): void {
 	$stmt->close();
 }
 
+// station2
+
+function station2_select_by_game(string $game): array {
+	global $db;
+	$stmt = $db->prepare('SELECT `id`, `name`, `code`, `capacity`, `polygon` FROM `station2` WHERE `game` = ? ORDER BY `name` ASC, `id` ASC');
+	$stmt->bind_param('s', $game);
+	return stmt_list($stmt);
+}
+
+function station2_belongs_to_game(int $id, string $game): bool {
+	global $db;
+	$stmt = $db->prepare('SELECT `id` FROM `station2` WHERE `id` = ? AND `game` = ?');
+	$stmt->bind_param('is', $id, $game);
+	return stmt_bool($stmt);
+}
+
+function station2_select_by_polygon(int $polygon): ?int {
+	global $db;
+	$stmt = $db->prepare('SELECT `id` FROM `station2` WHERE `polygon` = ? LIMIT 1');
+	$stmt->bind_param('i', $polygon);
+	return stmt_cell($stmt);
+}
+
+function station2_insert(string $name, string $code, int $capacity, ?int $polygon, string $game): void {
+	global $db;
+	$stmt = $db->prepare('INSERT INTO `station2` (`name`, `code`, `capacity`, `polygon`, `game`) VALUES (?, ?, ?, ?, ?)');
+	$stmt->bind_param('ssiis', $name, $code, $capacity, $polygon, $game);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function station2_update(int $id, string $name, string $code, int $capacity, ?int $polygon): void {
+	global $db;
+	$stmt = $db->prepare('UPDATE `station2` SET `name` = ?, `code` = ?, `capacity` = ?, `polygon` = ? WHERE `id` = ?');
+	$stmt->bind_param('ssiii', $name, $code, $capacity, $polygon, $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function station2_delete(int $id): void {
+	global $db;
+	$stmt = $db->prepare('DELETE FROM `station2` WHERE `id` = ?');
+	$stmt->bind_param('i', $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
 // place
 
 function place_list(): array {
@@ -560,6 +607,7 @@ if (is_post('game_register')) {
 	json([
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
+		'station_list' => station2_select_by_game($id),
 	]);
 }
 
@@ -573,10 +621,11 @@ if (is_post('game_login')) {
 	json([
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
+		'station_list' => station2_select_by_game($id),
 	]);
 }
 
-// TODO is_post('game_delete')
+// TODO manage game: delete, clone, change password
 
 if (is_post('game_update_name')) {
 	$id = post_slug('id');
@@ -653,6 +702,64 @@ if (is_post('polygon_delete')) {
 		exit('id');
 	polygon_delete($id);
 	json(polygon_select_by_game($game));
+}
+
+if (is_post('station2_insert')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$name = post_string('name');
+	$code = post_string('code');
+	$capacity = post_int('capacity');
+	if ($capacity <= 0)
+		exit('capacity');
+	$polygon = post_int_nullable('polygon');
+	if (!is_null($polygon)) {
+		if (!polygon_belongs_to_game($polygon, $game))
+			exit('polygon');
+		if (!is_null(station2_select_by_polygon($polygon)))
+			exit('polygon');
+	}
+	station2_insert($name, $code, $capacity, $polygon, $game);
+	json(station2_select_by_game($game));
+}
+
+if (is_post('station2_update')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$id = post_int('id');
+	if (!station2_belongs_to_game($id, $game))
+		exit('id');
+	$name = post_string('name');
+	$code = post_string('code');
+	$capacity = post_int('capacity');
+	if ($capacity <= 0)
+		exit('capacity');
+	$polygon = post_int_nullable('polygon');
+	if (!is_null($polygon)) {
+		if (!polygon_belongs_to_game($polygon, $game))
+			exit('polygon');
+		$station = station2_select_by_polygon($polygon);
+		if (!is_null($station) && $station !== $id)
+			exit('polygon');
+	}
+	station2_update($id, $name, $code, $capacity, $polygon);
+	json(station2_select_by_game($game));
+}
+
+if (is_post('station2_delete')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$id = post_int('id');
+	if (!station2_belongs_to_game($id, $game))
+		exit('id');
+	station2_delete($id);
+	json(station2_select_by_game($game));
 }
 
 if (is_post('admin_login')) {

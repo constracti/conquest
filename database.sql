@@ -48,6 +48,16 @@ CREATE TABLE `station` (
 	`place` int(11) DEFAULT NULL
 );
 
+DROP TABLE IF EXISTS `station2`;
+CREATE TABLE `station2` (
+	`id` int(11) NOT NULL,
+	`name` varchar(255) NOT NULL,
+	`code` varchar(255) NOT NULL,
+	`capacity` int(11) NOT NULL,
+	`polygon` int(11) DEFAULT NULL,
+	`game` varchar(255) NOT NULL
+);
+
 DROP TABLE IF EXISTS `success`;
 CREATE TABLE `success` (
 	`id` int(11) NOT NULL,
@@ -86,6 +96,11 @@ ALTER TABLE `station`
 	ADD PRIMARY KEY (`id`),
 	ADD KEY `place` (`place`);
 
+ALTER TABLE `station2`
+	ADD PRIMARY KEY (`id`),
+	ADD KEY `polygon` (`polygon`),
+	ADD KEY `game` (`game`);
+
 ALTER TABLE `success`
 	ADD PRIMARY KEY (`id`),
 	ADD KEY `station` (`station`),
@@ -104,6 +119,9 @@ ALTER TABLE `polygon`
 ALTER TABLE `station`
 	MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+ALTER TABLE `station2`
+	MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 ALTER TABLE `success`
 	MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
@@ -119,6 +137,10 @@ ALTER TABLE `polygon`
 
 ALTER TABLE `station`
 	ADD CONSTRAINT `station_ibfk_1` FOREIGN KEY (`place`) REFERENCES `place` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE `station2`
+	ADD CONSTRAINT `station2_ibfk_1` FOREIGN KEY (`polygon`) REFERENCES `polygon` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+	ADD CONSTRAINT `station2_ibfk_2` FOREIGN KEY (`game`) REFERENCES `game` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE `success`
 	ADD CONSTRAINT `success_ibfk_1` FOREIGN KEY (`station`) REFERENCES `station` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,

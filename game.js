@@ -1,5 +1,5 @@
 import { api } from './common.js';
-import { n } from './element.js';
+import { n, n_option_list } from './element.js';
 
 /**
  * @typedef Game
@@ -18,10 +18,21 @@ import { n } from './element.js';
  */
 
 /**
+ * @typedef Station
+ * @type {object}
+ * @property {number} id
+ * @property {string} name
+ * @property {string} code
+ * @property {number} capacity
+ * @property {?number} polygon
+ */
+
+/**
  * @typedef Login
  * @type {object}
  * @property {Game} game
  * @property {Polygon[]} polygon_list
+ * @property {Station[]} station_list
  */
 
 /**
@@ -29,6 +40,7 @@ import { n } from './element.js';
  * @type {object}
  * @property {Game} game
  * @property {Polygon[]} polygon_list
+ * @property {Station[]} station_list
  * @property {string} password
  */
 
@@ -51,6 +63,7 @@ function render() {
 	render_name();
 	render_map();
 	render_polygon();
+	render_station();
 }
 
 function render_name() {
@@ -84,8 +97,8 @@ function render_name() {
 				 * @type {Game}
 				 */
 				const result = await api.post('game_update_name', form_data);
-				spinner_div.classList.add('d-none');
 				state.game = result;
+				spinner_div.classList.add('d-none');
 				render();
 			},
 			content: [
@@ -167,8 +180,8 @@ function render_map() {
 				 * @type {Game}
 				 */
 				const result = await api.post('game_delete_map', form_data);
-				spinner_div.classList.add('d-none');
 				state.game = result;
+				spinner_div.classList.add('d-none');
 				render();
 			},
 			content: 'Delete',
@@ -195,8 +208,8 @@ function render_map() {
 				 * @type {Game}
 				 */
 				const result = await api.post('game_insert_map', form_data);
-				spinner_div.classList.add('d-none');
 				state.game = result;
+				spinner_div.classList.add('d-none');
 				render();
 			},
 			content: [
@@ -403,8 +416,8 @@ function render_polygon() {
 				 * @type {Polygon[]}
 				 */
 				const result = await api.post('polygon_update', form_data);
-				spinner_div.classList.add('d-none');
 				state.polygon_list = result;
+				spinner_div.classList.add('d-none');
 				render();
 			},
 			content: [
@@ -496,8 +509,8 @@ function render_polygon() {
 					 * @type {Polygon[]}
 					 */
 					const result = await api.post('polygon_delete', form_data);
-					spinner_div.classList.add('d-none');
 					state.polygon_list = result;
+					spinner_div.classList.add('d-none');
 					render();
 				},
 				content: 'Delete',
@@ -542,8 +555,8 @@ function render_polygon() {
 				 * @type {Polygon[]}
 				 */
 				const result = await api.post('polygon_insert', form_data);
-				spinner_div.classList.add('d-none');
 				state.polygon_list = result;
+				spinner_div.classList.add('d-none');
 				render();
 			},
 			content: [
@@ -623,6 +636,188 @@ function render_polygon() {
 	})();
 }
 
+function render_station() {
+	const polygon_set = new Set(state.station_list.map(station => station.polygon).filter(polygon => polygon !== null));
+	const polygon_map = new Map(state.polygon_list.map(polygon => [polygon.id, polygon]));
+	/**
+	 * @param {?Station} station
+	 * @returns {HTMLElement[]}
+	 */
+	function row(station) {
+		/**
+		 * @type {HTMLElement[]}
+		 */
+		const element_list = [];
+		element_list.push(n({
+			class: 'm-1 flex-grow-1',
+			content: station?.name,
+		}));
+		if (station !== null) {
+			element_list.push(n({
+				tag: 'code',
+				class: 'm-1',
+				content: station.code,
+			}));
+			element_list.push(n({
+				class: 'm-1',
+				content: `Capacity: ${station.capacity.toFixed()}`,
+			}));
+			element_list.push(n({
+				class: 'm-1 badge text-bg-info',
+				content: station.polygon !== null ? polygon_map.get(station.polygon).name : '-',
+			}));
+		}
+		// add or edit
+		element_list.push(n({
+			tag: 'button',
+			class: 'm-1 btn btn-secondary btn-sm',
+			click: () => {
+				element_list.forEach(element => element.classList.toggle('d-none'));
+			},
+			content: station !== null ? 'Edit' : 'Add',
+		}));
+		// delete
+		if (station !== null) {
+			element_list.push(n({
+				tag: 'button',
+				class: 'm-1 btn btn-danger btn-sm',
+				click: async () => {
+					if (!spinner_div.classList.contains('d-none'))
+						return;
+					spinner_div.classList.remove('d-none');
+					if (!confirm(`Delete station ${station.name}?`)) {
+						spinner_div.classList.add('d-none');
+						return;
+					}
+					const form_data = new FormData();
+					form_data.append('game', state.game.id);
+					form_data.append('password', state.password);
+					form_data.append('id', station.id.toFixed());
+					/**
+					 * @type {Station[]}
+					 */
+					const result = await api.post('station2_delete', form_data);
+					state.station_list = result;
+					spinner_div.classList.add('d-none');
+					render();
+				},
+				content: 'Delete',
+			}));
+		}
+		// form
+		element_list.push(n({
+			tag: 'form',
+			class: 'flex-grow-1 d-flex flex-row d-none',
+			submit: async event => {
+				event.preventDefault();
+				if (!spinner_div.classList.contains('d-none'))
+					return;
+				spinner_div.classList.remove('d-none');
+				const form_data = new FormData(event.currentTarget);
+				form_data.append('game', state.game.id);
+				form_data.append('password', state.password);
+				/**
+				 * @type {Station[]}
+				 */
+				const result = await api.post(station !== null ? 'station2_update' : 'station2_insert', form_data);
+				state.station_list = result;
+				spinner_div.classList.add('d-none');
+				render();
+			},
+			content: [
+				n({
+					tag: 'input',
+					value: station?.id?.toFixed(),
+					name: 'id',
+					type: 'hidden',
+				}),
+				n({
+					class: 'm-1 flex-grow-1',
+					content: [
+						n({
+							tag: 'input',
+							class: 'form-control form-control-sm',
+							value: station?.name,
+							name: 'name',
+							placeholder: 'Name',
+							required: true,
+						}),
+					],
+				}),
+				n({
+					class: 'm-1 flex-grow-1',
+					content: [
+						n({
+							tag: 'input',
+							class: 'form-control form-control-sm',
+							value: station?.code,
+							name: 'code',
+							placeholder: 'Code',
+							required: true,
+						}),
+					],
+				}),
+				n({
+					class: 'm-1 flex-grow-1',
+					content: [
+						n({
+							tag: 'input',
+							class: 'form-control form-control-sm',
+							value: station?.capacity?.toFixed() ?? '1',
+							name: 'capacity',
+							placeholder: 'Capacity',
+							required: true,
+							type: 'number',
+							custom: element => {
+								element.min = '1';
+							},
+						}),
+					],
+				}),
+				n({
+					class: 'm-1 flex-grow-1',
+					content: [
+						n({
+							tag: 'select',
+							class: 'form-select form-select-sm',
+							value: station?.polygon?.toFixed(),
+							name: 'polygon',
+							content: n_option_list(state.polygon_list.filter(polygon => !polygon_set.has(polygon.id) || polygon.id === station?.polygon), '(Polygon)'),
+						}),
+					],
+				}),
+				n({
+					tag: 'button',
+					class: 'm-1 btn btn-primary btn-sm',
+					type: 'submit',
+					content: 'Submit',
+				}),
+				n({
+					tag: 'button',
+					class: 'm-1 btn btn-secondary btn-sm',
+					type: 'button',
+					click: () => {
+						element_list.forEach(element => element.classList.toggle('d-none'));
+					},
+					content: 'Cancel',
+				}),
+			],
+		}));
+		// return
+		return n({
+			class: 'list-group-item d-flex flex-row align-items-center p-1',
+			content: element_list,
+		});
+	}
+	station_list.innerHTML = '';
+	state.station_list.forEach(station => {
+		station_list.append(row(station));
+	});
+	(() => {
+		station_list.append(row(null));
+	})();
+}
+
 /**
  * @type {HTMLDivElement}
  */
@@ -651,15 +846,16 @@ login_form.addEventListener('submit', async event => {
 		spinner_div.classList.add('d-none');
 		return;
 	}
-	spinner_div.classList.add('d-none');
 	login_form.reset();
 	localStorage.setItem('id', form_data.get('id'));
 	localStorage.setItem('password', form_data.get('password'));
 	state = {
 		game: result.game,
 		polygon_list: result.polygon_list,
+		station_list: result.station_list,
 		password: form_data.get('password'),
 	};
+	spinner_div.classList.add('d-none');
 	render();
 });
 
@@ -702,15 +898,16 @@ register_form.addEventListener('submit', async event => {
 		spinner_div.classList.add('d-none');
 		return;
 	}
-	spinner_div.classList.add('d-none');
 	register_form.reset();
 	localStorage.setItem('id', form_data.get('id'));
 	localStorage.setItem('password', form_data.get('password'));
 	state = {
 		game: result.game,
 		polygon_list: result.polygon_list,
+		station_list: result.station_list,
 		password: form_data.get('password'),
 	};
+	spinner_div.classList.add('d-none');
 	render();
 });
 
@@ -751,6 +948,11 @@ const map_block = document.getElementById('map-block');
  */
 const polygon_list = document.getElementById('polygon-list');
 
+/**
+ * @type {HTMLDivElement}
+ */
+const station_list = document.getElementById('station-list');
+
 (async () => {
 	const id = localStorage.getItem('id');
 	const password = localStorage.getItem('password');
@@ -772,6 +974,7 @@ const polygon_list = document.getElementById('polygon-list');
 	state = {
 		game: result.game,
 		polygon_list: result.polygon_list,
+		station_list: result.station_list,
 		password: password,
 	};
 	render();
