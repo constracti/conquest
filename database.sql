@@ -74,6 +74,15 @@ CREATE TABLE `team` (
 	`color` varchar(255) NOT NULL
 );
 
+DROP TABLE IF EXISTS `team2`;
+CREATE TABLE `team2` (
+	`id` int(11) NOT NULL,
+	`name` varchar(255) NOT NULL,
+	`background_color` varchar(255) NOT NULL,
+	`text_color` varchar(255) NOT NULL,
+	`game` varchar(255) NOT NULL
+);
+
 
 ALTER TABLE `config`
 	ADD PRIMARY KEY (`name`);
@@ -109,6 +118,10 @@ ALTER TABLE `success`
 ALTER TABLE `team`
 	ADD PRIMARY KEY (`id`);
 
+ALTER TABLE `team2`
+	ADD PRIMARY KEY (`id`),
+	ADD KEY `game` (`game`);
+
 
 ALTER TABLE `place`
 	MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
@@ -128,6 +141,9 @@ ALTER TABLE `success`
 ALTER TABLE `team`
 	MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
+ALTER TABLE `team2`
+	MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
 
 ALTER TABLE `player`
 	ADD CONSTRAINT `player_ibfk_1` FOREIGN KEY (`team`) REFERENCES `team` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -145,3 +161,6 @@ ALTER TABLE `station2`
 ALTER TABLE `success`
 	ADD CONSTRAINT `success_ibfk_1` FOREIGN KEY (`station`) REFERENCES `station` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
 	ADD CONSTRAINT `success_ibfk_2` FOREIGN KEY (`player`) REFERENCES `player` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE `team2`
+	ADD CONSTRAINT `team2_ibfk_1` FOREIGN KEY (`game`) REFERENCES `game` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
