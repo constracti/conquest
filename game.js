@@ -28,11 +28,21 @@ import { n, n_option_list } from './element.js';
  */
 
 /**
+ * @typedef Team
+ * @type {object}
+ * @property {number} id
+ * @property {string} name
+ * @property {string} background_color
+ * @property {string} text_color
+ */
+
+/**
  * @typedef Login
  * @type {object}
  * @property {Game} game
  * @property {Polygon[]} polygon_list
  * @property {Station[]} station_list
+ * @property {Team[]} team_list
  */
 
 /**
@@ -41,6 +51,7 @@ import { n, n_option_list } from './element.js';
  * @property {Game} game
  * @property {Polygon[]} polygon_list
  * @property {Station[]} station_list
+ * @property {Team[]} team_list
  * @property {string} password
  */
 
@@ -64,6 +75,7 @@ function render() {
 	render_map();
 	render_polygon();
 	render_station();
+	render_team();
 }
 
 function render_name() {
@@ -641,13 +653,14 @@ function render_station() {
 	const polygon_map = new Map(state.polygon_list.map(polygon => [polygon.id, polygon]));
 	/**
 	 * @param {?Station} station
-	 * @returns {HTMLElement[]}
+	 * @returns {HTMLDivElement}
 	 */
 	function row(station) {
 		/**
 		 * @type {HTMLElement[]}
 		 */
 		const element_list = [];
+		// fields
 		element_list.push(n({
 			class: 'm-1 flex-grow-1',
 			content: station?.name,
@@ -818,6 +831,175 @@ function render_station() {
 	})();
 }
 
+function render_team() {
+	/**
+	 * @param {?Team} team
+	 * @returns {HTMLDivElement}
+	 */
+	function row(team) {
+		/**
+		 * @type {HTMLElement[]}
+		 */
+		const element_list = [];
+		// fields
+		if (team !== null) {
+			element_list.push(n({
+				class: 'flex-grow-1',
+				content: [
+					n({
+						class: 'badge border m-1',
+						style: {
+							backgroundColor: team.background_color,
+							color: team.text_color,
+						},
+						content: team.name,
+					}),
+				],
+			}));
+		} else {
+			element_list.push(n({
+				class: 'm-1 flex-grow-1',
+			}));
+		}
+		// add or edit
+		element_list.push(n({
+			tag: 'button',
+			class: 'm-1 btn btn-secondary btn-sm',
+			click: () => {
+				element_list.forEach(element => element.classList.toggle('d-none'));
+			},
+			content: team !== null ? 'Edit' : 'Add',
+		}));
+		// delete
+		if (team !== null) {
+			element_list.push(n({
+				tag: 'button',
+				class: 'm-1 btn btn-danger btn-sm',
+				click: async () => {
+					if (!spinner_div.classList.contains('d-none'))
+						return;
+					spinner_div.classList.remove('d-none');
+					if (!confirm(`Delete team ${team.name}?`)) {
+						spinner_div.classList.add('d-none');
+						return;
+					}
+					const form_data = new FormData();
+					form_data.append('game', state.game.id);
+					form_data.append('password', state.password);
+					form_data.append('id', team.id.toFixed());
+					/**
+					 * @type {Team[]}
+					 */
+					const result = await api.post('team2_delete', form_data);
+					state.team_list = result;
+					spinner_div.classList.add('d-none');
+					render();
+				},
+				content: 'Delete',
+			}));
+		}
+		// form
+		element_list.push(n({
+			tag: 'form',
+			class: 'flex-grow-1 d-flex flex-row d-none',
+			submit: async event => {
+				event.preventDefault();
+				if (!spinner_div.classList.contains('d-none'))
+					return;
+				spinner_div.classList.remove('d-none');
+				const form_data = new FormData(event.currentTarget);
+				form_data.append('game', state.game.id);
+				form_data.append('password', state.password);
+				/**
+				 * @type {Team[]|null}
+				 */
+				const result = await api.post(team !== null ? 'team2_update' : 'team2_insert', form_data);
+				if (result === null) {
+					alert('Team name is not available.');
+					return;
+				}
+				state.team_list = result;
+				spinner_div.classList.add('d-none');
+				render();
+			},
+			content: [
+				n({
+					tag: 'input',
+					value: team?.id?.toFixed(),
+					name: 'id',
+					type: 'hidden',
+				}),
+				n({
+					class: 'm-1 flex-grow-1',
+					content: [
+						n({
+							tag: 'input',
+							class: 'form-control form-control-sm',
+							value: team?.name,
+							name: 'name',
+							placeholder: 'Name',
+							required: true,
+						}),
+					],
+				}),
+				n({
+					class: 'm-1',
+					content: [
+						n({
+							tag: 'input',
+							class: 'form-control form-control-sm form-control-color',
+							value: team?.background_color ?? '#ffffff',
+							name: 'background_color',
+							required: true,
+							type: 'color',
+						}),
+					],
+				}),
+				n({
+					class: 'm-1',
+					content: [
+						n({
+							tag: 'input',
+							class: 'form-control form-control-sm form-control-color',
+							value: team?.text_color ?? '#000000',
+							name: 'text_color',
+							required: true,
+							type: 'color',
+						}),
+					],
+				}),
+				n({
+					tag: 'button',
+					class: 'm-1 btn btn-primary btn-sm',
+					type: 'submit',
+					content: 'Submit',
+				}),
+				n({
+					tag: 'button',
+					class: 'm-1 btn btn-secondary btn-sm',
+					type: 'button',
+					click: () => {
+						element_list.forEach(element => element.classList.toggle('d-none'));
+					},
+					content: 'Cancel',
+				}),
+			],
+		}));
+		// return
+		return n({
+			class: 'list-group-item d-flex flex-row align-items-center p-1',
+			content: element_list,
+		});
+	}
+	team_list.innerHTML = '';
+	state.team_list.forEach(team => {
+		team_list.append(row(team));
+	});
+	(() => {
+		team_list.append(row(null));
+	})();
+}
+
 /**
  * @type {HTMLDivElement}
  */
@@ -853,6 +1035,7 @@ login_form.addEventListener('submit', async event => {
 		game: result.game,
 		polygon_list: result.polygon_list,
 		station_list: result.station_list,
+		team_list: result.team_list,
 		password: form_data.get('password'),
 	};
 	spinner_div.classList.add('d-none');
@@ -905,6 +1088,7 @@ register_form.addEventListener('submit', async event => {
 		game: result.game,
 		polygon_list: result.polygon_list,
 		station_list: result.station_list,
+		team_list: result.team_list,
 		password: form_data.get('password'),
 	};
 	spinner_div.classList.add('d-none');
@@ -971,6 +1155,20 @@ station_toggle.addEventListener('click', () => {
  */
 const station_list = document.getElementById('station-list');
 
+/**
+ * @type {HTMLButtonElement}
+ */
+const team_toggle = document.getElementById('team-toggle');
+team_toggle.addEventListener('click', () => {
+	team_list.classList.toggle('d-none');
+	[team_toggle.innerHTML, team_toggle.dataset.toggle] = [team_toggle.dataset.toggle, team_toggle.innerHTML];
+});
+
+/**
+ * @type {HTMLDivElement}
+ */
+const team_list = document.getElementById('team-list');
+
 (async () => {
 	const id = localStorage.getItem('id');
 	const password = localStorage.getItem('password');
@@ -993,6 +1191,7 @@ const station_list = document.getElementById('station-list');
 		game: result.game,
 		polygon_list: result.polygon_list,
 		station_list: result.station_list,
+		team_list: result.team_list,
 		password: password,
 	};
 	render();
