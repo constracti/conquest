@@ -257,7 +257,7 @@ function station2_belongs_to_game(int $id, string $game): bool {
 	return stmt_bool($stmt);
 }
 
-function station2_select_by_polygon(int $polygon): ?int {
+function station2_identify_by_polygon(int $polygon): ?int {
 	global $db;
 	$stmt = $db->prepare('SELECT `id` FROM `station2` WHERE `polygon` = ? LIMIT 1');
 	$stmt->bind_param('i', $polygon);
@@ -283,6 +283,53 @@ function station2_update(int $id, string $name, string $code, int $capacity, ?in
 function station2_delete(int $id): void {
 	global $db;
 	$stmt = $db->prepare('DELETE FROM `station2` WHERE `id` = ?');
+	$stmt->bind_param('i', $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
+// team2
+
+function team2_select_by_game(string $game): array {
+	global $db;
+	$stmt = $db->prepare('SELECT `id`, `name`, `background_color`, `text_color` FROM `team2` WHERE `game` = ? ORDER BY `name` ASC, `id` ASC');
+	$stmt->bind_param('s', $game);
+	return stmt_list($stmt);
+}
+
+function team2_belongs_to_game(int $id, string $game): bool {
+	global $db;
+	$stmt = $db->prepare('SELECT `id` FROM `team2` WHERE `id` = ? AND `game` = ?');
+	$stmt->bind_param('is', $id, $game);
+	return stmt_bool($stmt);
+}
+
+function team2_identify_by_name(string $name, string $game): ?int {
+	global $db;
+	$stmt = $db->prepare('SELECT `id` FROM `team2` WHERE `name` = ? AND `game` = ? LIMIT 1');
+	$stmt->bind_param('ss', $name, $game);
+	return stmt_cell($stmt);
+}
+
+function team2_insert(string $name, string $background_color, string $text_color, string $game): void {
+	global $db;
+	$stmt = $db->prepare('INSERT INTO `team2` (`name`, `background_color`, `text_color`, `game`) VALUES (?, ?, ?, ?)');
+	$stmt->bind_param('ssss', $name, $background_color, $text_color, $game);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function team2_update(int $id, string $name, string $background_color, string $text_color): void {
+	global $db;
+	$stmt = $db->prepare('UPDATE `team2` SET `name` = ?, `background_color` = ?, `text_color` = ? WHERE `id` = ?');
+	$stmt->bind_param('sssi', $name, $background_color, $text_color, $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function team2_delete(int $id): void {
+	global $db;
+	$stmt = $db->prepare('DELETE FROM `team2` WHERE `id` = ?');
 	$stmt->bind_param('i', $id);
 	$stmt->execute();
 	$stmt->close();
@@ -608,6 +655,7 @@ if (is_post('game_register')) {
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
 		'station_list' => station2_select_by_game($id),
+		'team_list' => team2_select_by_game($id),
 	]);
 }
 
@@ -622,6 +670,7 @@ if (is_post('game_login')) {
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
 		'station_list' => station2_select_by_game($id),
+		'team_list' => team2_select_by_game($id),
 	]);
 }
 
@@ -718,7 +767,7 @@ if (is_post('station2_insert')) {
 	if (!is_null($polygon)) {
 		if (!polygon_belongs_to_game($polygon, $game))
 			exit('polygon');
-		if (!is_null(station2_select_by_polygon($polygon)))
+		if (!is_null(station2_identify_by_polygon($polygon)))
 			exit('polygon');
 	}
 	station2_insert($name, $code, $capacity, $polygon, $game);
@@ -742,7 +791,7 @@ if (is_post('station2_update')) {
 	if (!is_null($polygon)) {
 		if (!polygon_belongs_to_game($polygon, $game))
 			exit('polygon');
-		$station = station2_select_by_polygon($polygon);
+		$station = station2_identify_by_polygon($polygon);
 		if (!is_null($station) && $station !== $id)
 			exit('polygon');
 	}
@@ -760,6 +809,50 @@ if (is_post('station2_delete')) {
 		exit('id');
 	station2_delete($id);
 	json(station2_select_by_game($game));
+}
+
+if (is_post('team2_insert')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$name = post_string('name');
+	if (!is_null(team2_identify_by_name($name, $game)))
+		json(NULL);
+	$background_color = post_string('background_color');
+	$text_color = post_string('text_color');
+	team2_insert($name, $background_color, $text_color, $game);
+	json(team2_select_by_game($game));
+}
+
+if (is_post('team2_update')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$id = post_int('id');
+	if (!team2_belongs_to_game($id, $game))
+		exit('id');
+	$name = post_string('name');
+	$team = team2_identify_by_name($name, $game);
+	if (!is_null($team) && $team !== $id)
+		json(NULL);
+	$background_color = post_string('background_color');
+	$text_color = post_string('text_color');
+	team2_update($id, $name, $background_color, $text_color);
+	json(team2_select_by_game($game));
+}
+
+if (is_post('team2_delete')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$id = post_int('id');
+	if (!team2_belongs_to_game($id, $game))
+		exit('id');
+	team2_delete($id);
+	json(team2_select_by_game($game));
 }
 
 if (is_post('admin_login')) {
