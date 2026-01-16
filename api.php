@@ -335,6 +335,53 @@ function team2_delete(int $id): void {
 	$stmt->close();
 }
 
+// player2
+
+function player2_select_by_game(string $game): array {
+	global $db;
+	$stmt = $db->prepare('SELECT `id`, `name`, `mark`, `team` FROM `player2` WHERE `game` = ? ORDER BY `name` ASC, `id` ASC');
+	$stmt->bind_param('s', $game);
+	return stmt_list($stmt);
+}
+
+function player2_belongs_to_game(int $id, string $game): bool {
+	global $db;
+	$stmt = $db->prepare('SELECT `id` FROM `player2` WHERE `id` = ? AND `game` = ?');
+	$stmt->bind_param('is', $id, $game);
+	return stmt_bool($stmt);
+}
+
+function player2_identify_by_mark(string $mark, string $game): ?int {
+	global $db;
+	$stmt = $db->prepare('SELECT `id` FROM `player2` WHERE `mark` = ? AND `game` = ? LIMIT 1');
+	$stmt->bind_param('ss', $mark, $game);
+	return stmt_cell($stmt);
+}
+
+function player2_insert(string $name, string $mark, ?int $team, string $game): void {
+	global $db;
+	$stmt = $db->prepare('INSERT INTO `player2` (`name`, `mark`, `team`, `game`) VALUES (?, ?, ?, ?)');
+	$stmt->bind_param('ssis', $name, $mark, $team, $game);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function player2_update(int $id, string $name, string $mark, ?int $team): void {
+	global $db;
+	$stmt = $db->prepare('UPDATE `player2` SET `name` = ?, `mark` = ?, `team` = ? WHERE `id` = ?');
+	$stmt->bind_param('ssii', $name, $mark, $team, $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function player2_delete(int $id): void {
+	global $db;
+	$stmt = $db->prepare('DELETE FROM `player2` WHERE `id` = ?');
+	$stmt->bind_param('i', $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
 // place
 
 function place_list(): array {
@@ -656,6 +703,7 @@ if (is_post('game_register')) {
 		'polygon_list' => polygon_select_by_game($id),
 		'station_list' => station2_select_by_game($id),
 		'team_list' => team2_select_by_game($id),
+		'player_list' => player2_select_by_game($id),
 	]);
 }
 
@@ -671,6 +719,7 @@ if (is_post('game_login')) {
 		'polygon_list' => polygon_select_by_game($id),
 		'station_list' => station2_select_by_game($id),
 		'team_list' => team2_select_by_game($id),
+		'player_list' => player2_select_by_game($id),
 	]);
 }
 
@@ -749,7 +798,7 @@ if (is_post('polygon_delete')) {
 	$id = post_int('id');
 	if (!polygon_belongs_to_game($id, $game))
 		exit('id');
-	polygon_delete($id);
+	polygon_delete($id); // TODO a station2.polygon might become null
 	json(polygon_select_by_game($game));
 }
 
@@ -851,8 +900,56 @@ if (is_post('team2_delete')) {
 	$id = post_int('id');
 	if (!team2_belongs_to_game($id, $game))
 		exit('id');
-	team2_delete($id);
+	team2_delete($id); // TODO a player2.team might become null
 	json(team2_select_by_game($game));
+}
+
+if (is_post('player2_insert')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$name = post_string('name');
+	$mark = post_slug('mark');
+	if (!is_null(player2_identify_by_mark($mark, $game)))
+		json(NULL);
+	$team = post_int_nullable('team');
+	if (!is_null($team) && !team2_belongs_to_game($team, $game))
+		exit('team');
+	player2_insert($name, $mark, $team, $game);
+	json(player2_select_by_game($game));
+}
+
+if (is_post('player2_update')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$id = post_int('id');
+	if (!player2_belongs_to_game($id, $game))
+		exit('id');
+	$name = post_string('name');
+	$mark = post_slug('mark');
+	$player = player2_identify_by_mark($mark, $game);
+	if (!is_null($player) && $player !== $id)
+		json(NULL);
+	$team = post_int_nullable('team');
+	if (!is_null($team) && !team2_belongs_to_game($team, $game))
+		exit('team');
+	player2_update($id, $name, $mark, $team);
+	json(player2_select_by_game($game));
+}
+
+if (is_post('player2_delete')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$id = post_int('id');
+	if (!player2_belongs_to_game($id, $game))
+		exit('id');
+	player2_delete($id);
+	json(player2_select_by_game($game));
 }
 
 if (is_post('admin_login')) {

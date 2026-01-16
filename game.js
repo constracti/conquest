@@ -37,12 +37,22 @@ import { n, n_option_list } from './element.js';
  */
 
 /**
+ * @typedef Player
+ * @type {object}
+ * @property {number} id
+ * @property {string} name
+ * @property {string} mark
+ * @property {?number} team
+ */
+
+/**
  * @typedef Login
  * @type {object}
  * @property {Game} game
  * @property {Polygon[]} polygon_list
  * @property {Station[]} station_list
  * @property {Team[]} team_list
+ * @property {Player[]} player_list
  */
 
 /**
@@ -52,6 +62,7 @@ import { n, n_option_list } from './element.js';
  * @property {Polygon[]} polygon_list
  * @property {Station[]} station_list
  * @property {Team[]} team_list
+ * @property {Player[]} player_list
  * @property {string} password
  */
 
@@ -76,6 +87,7 @@ function render() {
 	render_polygon();
 	render_station();
 	render_team();
+	render_player();
 }
 
 function render_name() {
@@ -916,6 +928,7 @@ function render_team() {
 				const result = await api.post(team !== null ? 'team2_update' : 'team2_insert', form_data);
 				if (result === null) {
 					alert('Team name is not available.');
+					spinner_div.classList.add('d-none');
 					return;
 				}
 				state.team_list = result;
@@ -1000,6 +1013,182 @@ function render_team() {
 	})();
 }
 
+function render_player() {
+	const team_map = new Map(state.team_list.map(team => [team.id, team]));
+	/**
+	 * @param {?Player} player
+	 * @returns {HTMLDivElement}
+	 */
+	function row(player) {
+		/**
+		 * @type {HTMLElement[]}
+		 */
+		const element_list = [];
+		// fields
+		if (player !== null) {
+			element_list.push(
+				n({
+					tag: 'code',
+					class: 'm-1',
+					content: player.mark,
+				}),
+				n({
+					class: 'm-1 flex-grow-1',
+					content: player.name,
+				}),
+			);
+			if (player.team !== null) {
+				const team = team_map.get(player.team);
+				element_list.push(n({
+					class: 'badge border m-1',
+					style: {
+						backgroundColor: team.background_color,
+						color: team.text_color,
+					},
+					content: team.name,
+				}));
+			}
+		} else {
+			element_list.push(n({
+				class: 'm-1 flex-grow-1',
+			}));
+		}
+		// add or edit
+		element_list.push(n({
+			tag: 'button',
+			class: 'm-1 btn btn-secondary btn-sm',
+			click: () => {
+				element_list.forEach(element => element.classList.toggle('d-none'));
+			},
+			content: player !== null ? 'Edit' : 'Add',
+		}));
+		// delete
+		if (player !== null) {
+			element_list.push(n({
+				tag: 'button',
+				class: 'm-1 btn btn-danger btn-sm',
+				click: async () => {
+					if (!spinner_div.classList.contains('d-none'))
+						return;
+					spinner_div.classList.remove('d-none');
+					if (!confirm(`Delete player ${player.name}?`)) {
+						spinner_div.classList.add('d-none');
+						return;
+					}
+					const form_data = new FormData();
+					form_data.append('game', state.game.id);
+					form_data.append('password', state.password);
+					form_data.append('id', player.id.toFixed());
+					/**
+					 * @type {Player[]}
+					 */
+					const result = await api.post('player2_delete', form_data);
+					state.player_list = result;
+					spinner_div.classList.add('d-none');
+					render();
+				},
+				content: 'Delete',
+			}));
+		}
+		// form
+		element_list.push(n({
+			tag: 'form',
+			class: 'flex-grow-1 d-flex flex-row d-none',
+			submit: async event => {
+				event.preventDefault();
+				if (!spinner_div.classList.contains('d-none'))
+					return;
+				spinner_div.classList.remove('d-none');
+				const form_data = new FormData(event.currentTarget);
+				form_data.append('game', state.game.id);
+				form_data.append('password', state.password);
+				/**
+				 * @type {Player[]|null}
+				 */
+				const result = await api.post(player !== null ? 'player2_update' : 'player2_insert', form_data);
+				if (result === null) {
+					alert('Player mark is not available.');
+					spinner_div.classList.add('d-none');
+					return;
+				}
+				state.player_list = result;
+				spinner_div.classList.add('d-none');
+				render();
+			},
+			content: [
+				n({
+					tag: 'input',
+					value: player?.id?.toFixed(),
+					name: 'id',
+					type: 'hidden',
+				}),
+				n({
+					class: 'm-1 flex-grow-1',
+					content: [
+						n({
+							tag: 'input',
+							class: 'form-control form-control-sm',
+							value: player?.name,
+							name: 'name',
+							placeholder: 'Name',
+							required: true,
+						}),
+					],
+				}),
+				n({
+					class: 'm-1 flex-grow-1',
+					content: [
+						n({
+							tag: 'input',
+							class: 'form-control form-control-sm',
+							value: player?.mark,
+							name: 'mark',
+							placeholder: 'Mark',
+							required: true,
+						}),
+					],
+				}),
+				n({
+					class: 'm-1 flex-grow-1',
+					content: [
+						n({
+							tag: 'select',
+							class: 'form-select form-select-sm',
+							value: player?.team?.toFixed(),
+							name: 'team',
+							content: n_option_list(state.team_list, '(Team)'),
+						}),
+					],
+				}),
+				n({
+					tag: 'button',
+					class: 'm-1 btn btn-primary btn-sm',
+					type: 'submit',
+					content: 'Submit',
+				}),
+				n({
+					tag: 'button',
+					class: 'm-1 btn btn-secondary btn-sm',
+					type: 'button',
+					click: () => {
+						element_list.forEach(element => element.classList.toggle('d-none'));
+					},
+					content: 'Cancel',
+				}),
+			],
+		}));
+		return n({
+			class: 'list-group-item d-flex flex-row align-items-center p-1',
+			content: element_list,
+		});
+	}
+	player_list.innerHTML = '';
+	state.player_list.forEach(player => {
+		player_list.append(row(player));
+	});
+	player_list.append(row(null));
+}
+
 /**
  * @type {HTMLDivElement}
  */
@@ -1036,6 +1225,7 @@ login_form.addEventListener('submit', async event => {
 		polygon_list: result.polygon_list,
 		station_list: result.station_list,
 		team_list: result.team_list,
+		player_list: result.player_list,
 		password: form_data.get('password'),
 	};
 	spinner_div.classList.add('d-none');
@@ -1089,6 +1279,7 @@ register_form.addEventListener('submit', async event => {
 		polygon_list: result.polygon_list,
 		station_list: result.station_list,
 		team_list: result.team_list,
+		player_list: result.player_list,
 		password: form_data.get('password'),
 	};
 	spinner_div.classList.add('d-none');
@@ -1169,6 +1360,20 @@ team_toggle.addEventListener('click', () => {
  */
 const team_list = document.getElementById('team-list');
 
+/**
+ * @type {HTMLButtonElement}
+ */
+const player_toggle = document.getElementById('player-toggle');
+player_toggle.addEventListener('click', () => {
+	player_list.classList.toggle('d-none');
+	[player_toggle.innerHTML, player_toggle.dataset.toggle] = [player_toggle.dataset.toggle, player_toggle.innerHTML];
+});
+
+/**
+ * @type {HTMLDivElement}
+ */
+const player_list = document.getElementById('player-list');
+
 (async () => {
 	const id = localStorage.getItem('id');
 	const password = localStorage.getItem('password');
@@ -1192,6 +1397,7 @@ const team_list = document.getElementById('team-list');
 		polygon_list: result.polygon_list,
 		station_list: result.station_list,
 		team_list: result.team_list,
+		player_list: result.player_list,
 		password: password,
 	};
 	render();
