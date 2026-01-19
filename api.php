@@ -217,6 +217,13 @@ function polygon_belongs_to_game(int $id, string $game): bool {
 	return stmt_bool($stmt);
 }
 
+function polygon_count_stations(int $id): int {
+	global $db;
+	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `station2` WHERE `polygon` = ?');
+	$stmt->bind_param('i', $id);
+	return stmt_cell($stmt);
+}
+
 function polygon_insert(string $name, ?string $content, string $game): void {
 	global $db;
 	$stmt = $db->prepare('INSERT INTO `polygon` (`name`, `content`, `game`) VALUES (?, ?, ?)');
@@ -308,6 +315,13 @@ function team2_identify_by_name(string $name, string $game): ?int {
 	global $db;
 	$stmt = $db->prepare('SELECT `id` FROM `team2` WHERE `name` = ? AND `game` = ? LIMIT 1');
 	$stmt->bind_param('ss', $name, $game);
+	return stmt_cell($stmt);
+}
+
+function team2_count_players(int $id): int {
+	global $db;
+	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `player2` WHERE `team` = ?');
+	$stmt->bind_param('i', $id);
 	return stmt_cell($stmt);
 }
 
@@ -798,7 +812,9 @@ if (is_post('polygon_delete')) {
 	$id = post_int('id');
 	if (!polygon_belongs_to_game($id, $game))
 		exit('id');
-	polygon_delete($id); // TODO a station2.polygon might become null
+	if (polygon_count_stations($id) !== 0)
+		exit('id');
+	polygon_delete($id);
 	json(polygon_select_by_game($game));
 }
 
@@ -900,7 +916,9 @@ if (is_post('team2_delete')) {
 	$id = post_int('id');
 	if (!team2_belongs_to_game($id, $game))
 		exit('id');
-	team2_delete($id); // TODO a player2.team might become null
+	if (team2_count_players($id) !== 0)
+		exit('id');
+	team2_delete($id);
 	json(team2_select_by_game($game));
 }
 
