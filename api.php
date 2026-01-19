@@ -396,6 +396,14 @@ function player2_delete(int $id): void {
 	$stmt->close();
 }
 
+function player2_truncate(string $game): void {
+	global $db;
+	$stmt = $db->prepare('DELETE FROM `player2` WHERE `game` = ?');
+	$stmt->bind_param('s', $game);
+	$stmt->execute();
+	$stmt->close();
+}
+
 // place
 
 function place_list(): array {
@@ -928,7 +936,7 @@ if (is_post('player2_insert')) {
 	if (!game_matches($game, $password))
 		exit('password');
 	$name = post_string('name');
-	$mark = post_slug('mark');
+	$mark = post_string('mark');
 	if (!is_null(player2_identify_by_mark($mark, $game)))
 		json(NULL);
 	$team = post_int_nullable('team');
@@ -947,7 +955,7 @@ if (is_post('player2_update')) {
 	if (!player2_belongs_to_game($id, $game))
 		exit('id');
 	$name = post_string('name');
-	$mark = post_slug('mark');
+	$mark = post_string('mark');
 	$player = player2_identify_by_mark($mark, $game);
 	if (!is_null($player) && $player !== $id)
 		json(NULL);
@@ -967,6 +975,65 @@ if (is_post('player2_delete')) {
 	if (!player2_belongs_to_game($id, $game))
 		exit('id');
 	player2_delete($id);
+	json(player2_select_by_game($game));
+}
+
+if (is_post('player2_import')) {
+	$game = post_slug('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	$text = post_string('text');
+	$line_list = mb_split('\r\n|\r|\n', $text);
+	if ($line_list === FALSE)
+		exit('text');
+	$mark_list = []; // NOTE /Ds/Set is not available
+	$line_list = array_map(function(string $line) use ($game, &$mark_list): null|string|array {
+		$line = mb_split('\t', $line);
+		if ($line === FALSE)
+			exit('text');
+		if (count($line) === 1 && $line[0] === '')
+			return NULL;
+		if (count($line) !== 3)
+			return 'Wrong number of columns.';
+		$mark = $line[0];
+		$name = $line[1];
+		$team = $line[2];
+		if (mb_strlen($mark) === 0)
+			return 'Player mark is empty.';
+		if (in_array($mark, $mark_list, TRUE))
+			return 'Player mark is not available.';
+		$mark_list[] = $mark;
+		if (mb_strlen($name) === 0)
+			return 'Player name is empty.';
+		if (mb_strlen($team) === 0) {
+			$team = NULL;
+		} else {
+			$team = team2_identify_by_name($team, $game);
+			if (is_null($team))
+				return 'Player team not found.';
+		}
+		return [
+			'name' => $name,
+			'mark' => $mark,
+			'team' => $team,
+		];
+	}, $line_list);
+	$player_list = [];
+	foreach ($line_list as $line_number => $line) {
+		if (is_null($line))
+			continue;
+		if (is_string($line)) {
+			json([
+				'error' => $line,
+				'line' => $line_number + 1,
+			]);
+		}
+		$player_list[] = $line;
+	}
+	player2_truncate($game);
+	foreach ($player_list as $player)
+		player2_insert($player['name'], $player['mark'], $player['team'], $game);
 	json(player2_select_by_game($game));
 }
 
@@ -1012,164 +1079,6 @@ if (is_post('admin_config')) {
 	config_set('reward_conquest', $reward_conquest);
 	config_set('reward_rate', $reward_rate);
 	json(NULL);
-}
-
-if (is_post('station_update')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$id = post_int('id');
-	if (!station_exists($id))
-		exit('id');
-	$name = post_string('name');
-	$code = post_string('code');
-	$capacity = post_int('capacity');
-	if ($capacity <= 0)
-		exit('capacity');
-	$place = post_int_nullable('place');
-	$station_by_place = !is_null($place) ? place_station($place) : NULL;
-	if (!is_null($place) && !is_null($station_by_place) && $id !== $station_by_place)
-		exit('place');
-	station_update($id, $name, $code, $capacity, $place);
-	json([
-		'station_list' => station_with_code_list(),
-	]);
-}
-
-if (is_post('team_insert')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$name = post_string('name');
-	$color = post_string('color');
-	team_insert($name, $color);
-	json([
-		'team_list' => team_list(),
-	]);
-}
-
-if (is_post('team_update')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$id = post_int('id');
-	if (!team_exists($id))
-		exit('id');
-	$name = post_string('name');
-	$color = post_string('color');
-	team_update($id, $name, $color);
-	json([
-		'team_list' => team_list(),
-	]);
-}
-
-if (is_post('team_delete')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$id = post_int('id');
-	if (!team_exists($id))
-		exit('id');
-	if (team_players($id) !== 0)
-		exit('id');
-	team_delete($id);
-	json([
-		'team_list' => team_list(),
-	]);
-}
-
-if (is_post('player_insert')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$id = post_string('id');
-	if (player_exists($id))
-		json(NULL);
-	$name = post_string('name');
-	$team = post_int('team');
-	if (!team_exists($team))
-		exit('team');
-	player_insert($id, $name, $team, FALSE);
-	json([
-		'player_list' => player_list(),
-	]);
-}
-
-if (is_post('player_update')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$player = post_string('player');
-	if (!player_exists($player))
-		exit('player');
-	$id = post_string('id');
-	if ($id !== $player && player_exists($id))
-		json(NULL);
-	$name = post_string('name');
-	$team = post_int('team');
-	if (!team_exists($team))
-		exit('team');
-	$block = boolval(post_int('block'));
-	player_update($player, $id, $name, $team, $block);
-	json([
-		'player_list' => player_list(),
-	]);
-}
-
-if (is_post('player_delete')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$id = post_string('id');
-	if (!player_exists($id))
-		exit('id');
-	player_delete($id);
-	json([
-		'player_list' => player_list(),
-	]);
-}
-
-if (is_post('player_import')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$text = post_string('text');
-	$player_list = mb_split('\r\n|\r|\n', $text);
-	if ($player_list === FALSE)
-		json(NULL);
-	$team_dict = team_list(); // NOTE name column of team table does not have a unique constraint
-	$team_dict = array_combine(array_column($team_dict, 'name'), array_column($team_dict, 'id'));
-	$player_list = array_map(function(string $player) use ($team_dict): ?array {
-		$player = mb_split('\t', $player);
-		if ($player === FALSE)
-			json(NULL);
-		if (count($player) === 1 && $player[0] === '')
-			return NULL;
-		if (count($player) !== 3)
-			json(NULL);
-		$player = array_combine(['id', 'name', 'team'], $player);
-		if (empty($player['id']))
-			json(NULL);
-		if (empty($player['name']))
-			json(NULL);
-		$team = $player['team'];
-		if (!isset($team_dict[$team]))
-			json(NULL);
-		$player['team'] = $team_dict[$team];
-		return $player;
-	}, $player_list);
-	$player_list = array_filter($player_list, function(?array $player): bool {
-		return !is_null($player);
-	});
-	if (count(array_unique(array_column($player_list, 'id'))) !== count($player_list))
-		json(NULL);
-	success_truncate();
-	player_truncate();
-	foreach ($player_list as $player)
-		player_insert($player['id'], $player['name'], $player['team'], FALSE);
-	json([
-		'player_list' => player_list(),
-	]);
 }
 
 if (is_post('success_truncate')) {
