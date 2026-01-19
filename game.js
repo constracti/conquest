@@ -404,6 +404,11 @@ function svg_one(polygon, size) {
 }
 
 function render_polygon() {
+	const station_count_map_by_polygon = new Map(state.polygon_list.map(polygon => [polygon.id, 0]));
+	state.station_list.forEach(station => {
+		if (station.polygon !== null)
+			station_count_map_by_polygon.set(station.polygon, station_count_map_by_polygon.get(station.polygon) + 1);
+	});
 	/**
 	 * @param {?Polygon} polygon
 	 * @returns {HTMLDivElement}
@@ -473,6 +478,9 @@ function render_polygon() {
 					render();
 				},
 				content: 'Delete',
+				custom: element => {
+					element.disabled = station_count_map_by_polygon.get(polygon.id) !== 0;
+				},
 			}));
 		}
 		// form
@@ -684,6 +692,11 @@ function render_station() {
 }
 
 function render_team() {
+	const player_count_map_by_team = new Map(state.team_list.map(team => [team.id, 0]));
+	state.player_list.forEach(player => {
+		if (player.team !== null)
+			player_count_map_by_team.set(player.team, player_count_map_by_team.get(player.team) + 1);
+	});
 	/**
 	 * @param {?Team} team
 	 * @returns {HTMLDivElement}
@@ -748,6 +761,9 @@ function render_team() {
 					render();
 				},
 				content: 'Delete',
+				custom: element => {
+					element.disabled = player_count_map_by_team.get(team.id) !== 0;
+				},
 			}));
 		}
 		// form
