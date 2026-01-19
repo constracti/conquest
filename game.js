@@ -1,5 +1,5 @@
 import { api } from './common.js';
-import { n, n_option_list } from './element.js';
+import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from './element.js';
 
 /**
  * @typedef Game
@@ -404,118 +404,53 @@ function svg_one(polygon, size) {
 }
 
 function render_polygon() {
-	polygon_list.innerHTML = '';
-	state.polygon_list.forEach(polygon => {
+	/**
+	 * @param {?Polygon} polygon
+	 * @returns {HTMLDivElement}
+	 */
+	function row(polygon) {
 		/**
-		 * @type {HTMLDivElement}
+		 * @type {HTMLElement[]}
 		 */
-		const map_div = n({
-			class: 'm-1 position-relative',
-		});
-		/**
-		 * @type {HTMLInputElement}
-		 */
-		const content_input = n({
-			tag: 'input',
-			value: polygon.content ?? '',
-			type: 'hidden',
-			name: 'content',
-		});
-		/**
-		 * @type {HTMLFormElement}
-		 */
-		const form = n({
-			tag: 'form',
-			class: 'flex-grow-1 d-flex flex-column d-none',
-			submit: async event => {
-				event.preventDefault();
-				if (!spinner_div.classList.contains('d-none'))
-					return;
-				spinner_div.classList.remove('d-none');
-				const form_data = new FormData(event.currentTarget);
-				form_data.append('game', state.game.id);
-				form_data.append('password', state.password);
-				form_data.append('id', polygon.id.toFixed());
-				/**
-				 * @type {Polygon[]}
-				 */
-				const result = await api.post('polygon_update', form_data);
-				state.polygon_list = result;
-				spinner_div.classList.add('d-none');
-				render();
+		const element_list = [];
+		// fields
+		element_list.push(n({
+			class: 'm-1 flex-grow-1',
+			content: polygon?.name,
+		}));
+		if (polygon !== null) {
+			element_list.push(svg_one(polygon, '60px'));
+		}
+		// add or edit
+		element_list.push(n({
+			tag: 'button',
+			class: 'm-1 btn btn-secondary btn-sm',
+			click: () => {
+				element_list.forEach(element => element.classList.toggle('d-none'));
+				map_div.innerHTML = '';
+				if (state.game.map !== null) {
+					map_div.append(n({
+						tag: 'img',
+						class: 'w-100',
+						custom: element => {
+							element.src = state.game.map;
+						},
+					}));
+				} else {
+					map_div.append(n({
+						class: 'w-100 ratio ratio-1x1',
+					}));
+				}
+				const svg_svg = svg_new(state.polygon_list, polygon?.id ?? null);
+				map_div.append(svg_svg);
+				svg_draw(svg_svg, content_input);
 			},
-			content: [
-				map_div,
-				n({
-					class: 'd-flex flex-row',
-					content: [
-						n({
-							class: 'm-1 flex-grow-1',
-							content: [
-								n({
-									tag: 'input',
-									class: 'form-control form-control-sm',
-									value: polygon.name,
-									name: 'name',
-									placeholder: 'Name',
-									required: true,
-								}),
-							],
-						}),
-						content_input,
-						n({
-							tag: 'button',
-							class: 'm-1 btn btn-primary btn-sm',
-							type: 'submit',
-							content: 'Submit',
-						}),
-						n({
-							tag: 'button',
-							class: 'm-1 btn btn-secondary btn-sm',
-							type: 'button',
-							click: () => {
-								element_list.forEach(element => element.classList.toggle('d-none'));
-								map_div.innerHTML = '';
-							},
-							content: 'Cancel',
-						}),
-					],
-				}),
-			],
-		});
-		const element_list = [
-			n({
-				class: 'm-1 flex-grow-1',
-				content: polygon.name,
-			}),
-			svg_one(polygon, '60px'),
-			n({
+			content: polygon !== null ? 'Edit' : 'Add',
+		}));
+		// delete
+		if (polygon !== null) {
+			element_list.push(n({
 				tag: 'button',
-				class: 'm-1 btn btn-secondary btn-sm',
-				type: 'button',
-				click: () => {
-					element_list.forEach(element => element.classList.toggle('d-none'));
-					map_div.innerHTML = '';
-					if (state.game.map !== null) {
-						map_div.append(n({
-							tag: 'img',
-							class: 'w-100',
-							custom: element => {
-								element.src = state.game.map;
-							},
-						}));
-					} else {
-						map_div.append(n({
-							class: 'w-100 ratio ratio-1x1',
-						}));
-					}
-					const svg_svg = svg_new(state.polygon_list, polygon.id);
-					map_div.append(svg_svg);
-					svg_draw(svg_svg, content_input);
-				},
-				content: 'Edit',
-			}),
-			n({
 				class: 'm-1 btn btn-danger btn-sm',
 				click: async () => {
 					if (!spinner_div.classList.contains('d-none'))
@@ -538,33 +473,18 @@ function render_polygon() {
 					render();
 				},
 				content: 'Delete',
-			}),
-			form,
-		];
-		polygon_list.append(n({
-			class: 'list-group-item d-flex flex-row align-items-center p-1',
-			content: element_list,
-		}));
-	});
-	(() => {
+			}));
+		}
+		// form
+		const prefix = `polygon-${(polygon?.id ?? 0).toFixed()}-`;
 		/**
 		 * @type {HTMLDivElement}
 		 */
 		const map_div = n({
 			class: 'm-1 position-relative',
 		});
-		/**
-		 * @type {HTMLInputElement}
-		 */
-		const content_input = n({
-			tag: 'input',
-			type: 'hidden',
-			name: 'content',
-		});
-		/**
-		 * @type {HTMLFormElement}
-		 */
-		const form = n({
+		const content_input = n_form_hidden('content', polygon?.content);
+		element_list.push(n({
 			tag: 'form',
 			class: 'flex-grow-1 d-flex flex-column d-none',
 			submit: async event => {
@@ -578,7 +498,7 @@ function render_polygon() {
 				/**
 				 * @type {Polygon[]}
 				 */
-				const result = await api.post('polygon_insert', form_data);
+				const result = await api.post(polygon !== null ? 'polygon_update' : 'polygon_insert', form_data);
 				state.polygon_list = result;
 				spinner_div.classList.add('d-none');
 				render();
@@ -586,78 +506,38 @@ function render_polygon() {
 			content: [
 				map_div,
 				n({
+					class: 'mx-1 mt-0 mb-1 form-text',
+					content: 'Click on the map to append a point. Double click on a point to remove it.',
+				}),
+				n({
 					class: 'd-flex flex-row',
 					content: [
-						n({
-							class: 'm-1 flex-grow-1',
-							content: [
-								n({
-									tag: 'input',
-									class: 'form-control form-control-sm',
-									name: 'name',
-									placeholder: 'Name',
-									required: true,
-								}),
-							],
+						n_form_hidden('id', polygon?.id?.toFixed()),
+						n_form_control({
+							id: prefix + 'name',
+							label: 'Name',
+							name: 'name',
+							value: polygon?.name,
+							required: true,
 						}),
 						content_input,
-						n({
-							tag: 'button',
-							class: 'm-1 btn btn-primary btn-sm',
-							type: 'submit',
-							content: 'Submit',
-						}),
-						n({
-							tag: 'button',
-							class: 'm-1 btn btn-secondary btn-sm',
-							type: 'button',
-							click: () => {
-								element_list.forEach(element => element.classList.toggle('d-none'));
-								map_div.innerHTML = '';
-							},
-							content: 'Cancel',
-						}),
+						n_form_submit(),
+						n_form_cancel(element_list),
 					],
 				}),
 			],
-		});
-		const element_list = [
-			n({
-				class: 'flex-grow-1',
-			}),
-			n({
-				tag: 'button',
-				class: 'm-1 btn btn-secondary btn-sm',
-				type: 'button',
-				click: () => {
-					element_list.forEach(element => element.classList.toggle('d-none'));
-					map_div.innerHTML = '';
-					if (state.game.map !== null) {
-						map_div.append(n({
-							tag: 'img',
-							class: 'w-100',
-							custom: element => {
-								element.src = state.game.map;
-							},
-						}));
-					} else {
-						map_div.append(n({
-							class: 'w-100 ratio ratio-1x1',
-						}));
-					}
-					const svg_svg = svg_new(state.polygon_list, null);
-					map_div.append(svg_svg);
-					svg_draw(svg_svg, content_input);
-				},
-				content: 'Add',
-			}),
-			form,
-		];
-		polygon_list.append(n({
-			class: 'list-group-item d-flex flex-row p-1',
-			content: element_list,
 		}));
-	})();
+		// return
+		return n({
+			class: 'list-group-item d-flex flex-row align-items-center p-1',
+			content: element_list,
+		});
+	}
+	polygon_list.innerHTML = '';
+	state.polygon_list.forEach(polygon => {
+		polygon_list.append(row(polygon));
+	});
+	polygon_list.append(row(null));
 }
 
 function render_station() {
@@ -730,6 +610,7 @@ function render_station() {
 			}));
 		}
 		// form
+		const prefix = `station-${(station?.id ?? 0).toFixed()}-`;
 		element_list.push(n({
 			tag: 'form',
 			class: 'flex-grow-1 d-flex flex-row d-none',
@@ -750,82 +631,41 @@ function render_station() {
 				render();
 			},
 			content: [
-				n({
-					tag: 'input',
-					value: station?.id?.toFixed(),
-					name: 'id',
-					type: 'hidden',
+				n_form_hidden('id', station?.id?.toFixed()),
+				n_form_control({
+					id: prefix + 'name',
+					label: 'Name',
+					name: 'name',
+					value: station?.name,
+					required: true,
 				}),
-				n({
-					class: 'm-1 flex-grow-1',
-					content: [
-						n({
-							tag: 'input',
-							class: 'form-control form-control-sm',
-							value: station?.name,
-							name: 'name',
-							placeholder: 'Name',
-							required: true,
-						}),
-					],
+				n_form_control({
+					id: prefix + 'code',
+					label: 'Code',
+					name: 'code',
+					value: station?.code,
+					required: true,
+					text: 'A password used to submit successes.',
 				}),
-				n({
-					class: 'm-1 flex-grow-1',
-					content: [
-						n({
-							tag: 'input',
-							class: 'form-control form-control-sm',
-							value: station?.code,
-							name: 'code',
-							placeholder: 'Code',
-							required: true,
-						}),
-					],
+				n_form_control({
+					type: 'number',
+					id: prefix + 'capacity',
+					label: 'Capacity',
+					name: 'capacity',
+					min: '1',
+					value: station?.capacity?.toFixed() ?? '1',
+					required: true,
 				}),
-				n({
-					class: 'm-1 flex-grow-1',
-					content: [
-						n({
-							tag: 'input',
-							class: 'form-control form-control-sm',
-							value: station?.capacity?.toFixed() ?? '1',
-							name: 'capacity',
-							placeholder: 'Capacity',
-							required: true,
-							type: 'number',
-							custom: element => {
-								element.min = '1';
-							},
-						}),
-					],
+				n_form_control({
+					type: 'select',
+					id: prefix + 'polygon',
+					label: 'Polygon',
+					name: 'polygon',
+					option_list: n_option_list(state.polygon_list.filter(polygon => !polygon_set.has(polygon.id) || polygon.id === station?.polygon), '-'),
+					value: station?.polygon?.toFixed(),
 				}),
-				n({
-					class: 'm-1 flex-grow-1',
-					content: [
-						n({
-							tag: 'select',
-							class: 'form-select form-select-sm',
-							value: station?.polygon?.toFixed(),
-							name: 'polygon',
-							content: n_option_list(state.polygon_list.filter(polygon => !polygon_set.has(polygon.id) || polygon.id === station?.polygon), '(Polygon)'),
-						}),
-					],
-				}),
-				n({
-					tag: 'button',
-					class: 'm-1 btn btn-primary btn-sm',
-					type: 'submit',
-					content: 'Submit',
-				}),
-				n({
-					tag: 'button',
-					class: 'm-1 btn btn-secondary btn-sm',
-					type: 'button',
-					click: () => {
-						element_list.forEach(element => element.classList.toggle('d-none'));
-					},
-					content: 'Cancel',
-				}),
+				n_form_submit(),
+				n_form_cancel(element_list),
 			],
 		}));
 		// return
@@ -911,6 +751,7 @@ function render_team() {
 			}));
 		}
 		// form
+		const prefix = `team-${(team?.id ?? 0).toFixed()}-`;
 		element_list.push(n({
 			tag: 'form',
 			class: 'flex-grow-1 d-flex flex-row d-none',
@@ -936,66 +777,33 @@ function render_team() {
 				render();
 			},
 			content: [
-				n({
-					tag: 'input',
-					value: team?.id?.toFixed(),
-					name: 'id',
-					type: 'hidden',
+				n_form_hidden('id', team?.id?.toFixed()),
+				n_form_control({
+					id: prefix + 'name',
+					label: 'Name',
+					name: 'name',
+					value: team?.name,
+					required: true,
+					text: 'Name must be unique.',
 				}),
-				n({
-					class: 'm-1 flex-grow-1',
-					content: [
-						n({
-							tag: 'input',
-							class: 'form-control form-control-sm',
-							value: team?.name,
-							name: 'name',
-							placeholder: 'Name',
-							required: true,
-						}),
-					],
+				n_form_control({
+					type: 'color',
+					id: prefix + 'background-color',
+					label: 'Background color',
+					name: 'background_color',
+					value: team?.background_color ?? '#ffffff',
+					required: true,
 				}),
-				n({
-					class: 'm-1',
-					content: [
-						n({
-							tag: 'input',
-							class: 'form-control form-control-sm form-control-color',
-							value: team?.background_color ?? '#ffffff',
-							name: 'background_color',
-							required: true,
-							type: 'color',
-						}),
-					],
+				n_form_control({
+					type: 'color',
+					id: prefix + 'text-color',
+					label: 'Text color',
+					name: 'text_color',
+					value: team?.text_color ?? '#000000',
+					required: true,
 				}),
-				n({
-					class: 'm-1',
-					content: [
-						n({
-							tag: 'input',
-							class: 'form-control form-control-sm form-control-color',
-							value: team?.text_color ?? '#000000',
-							name: 'text_color',
-							required: true,
-							type: 'color',
-						}),
-					],
-				}),
-				n({
-					tag: 'button',
-					class: 'm-1 btn btn-primary btn-sm',
-					type: 'submit',
-					content: 'Submit',
-				}),
-				n({
-					tag: 'button',
-					class: 'm-1 btn btn-secondary btn-sm',
-					type: 'button',
-					click: () => {
-						element_list.forEach(element => element.classList.toggle('d-none'));
-					},
-					content: 'Cancel',
-				}),
+				n_form_submit(),
+				n_form_cancel(element_list),
 			],
 		}));
 		// return
@@ -1091,6 +899,7 @@ function render_player() {
 			}));
 		}
 		// form
+		const prefix = `player-${(player?.id ?? 0).toFixed()}-`;
 		element_list.push(n({
 			tag: 'form',
 			class: 'flex-grow-1 d-flex flex-row d-none',
@@ -1116,65 +925,32 @@ function render_player() {
 				render();
 			},
 			content: [
-				n({
-					tag: 'input',
-					value: player?.id?.toFixed(),
-					name: 'id',
-					type: 'hidden',
+				n_form_hidden('id', player?.id?.toFixed()),
+				n_form_control({
+					id: prefix + 'name',
+					label: 'Name',
+					name: 'name',
+					value: player?.name,
+					required: true,
 				}),
-				n({
-					class: 'm-1 flex-grow-1',
-					content: [
-						n({
-							tag: 'input',
-							class: 'form-control form-control-sm',
-							value: player?.name,
-							name: 'name',
-							placeholder: 'Name',
-							required: true,
-						}),
-					],
+				n_form_control({
+					id: prefix + 'mark',
+					label: 'Mark',
+					name: 'mark',
+					value: player?.mark,
+					required: true,
+					text: 'A unique identifier.',
 				}),
-				n({
-					class: 'm-1 flex-grow-1',
-					content: [
-						n({
-							tag: 'input',
-							class: 'form-control form-control-sm',
-							value: player?.mark,
-							name: 'mark',
-							placeholder: 'Mark',
-							required: true,
-						}),
-					],
+				n_form_control({
+					type: 'select',
+					id: prefix + 'team',
+					label: 'Team',
+					name: 'team',
+					option_list: n_option_list(state.team_list, '-'),
+					value: player?.team?.toFixed(),
 				}),
-				n({
-					class: 'm-1 flex-grow-1',
-					content: [
-						n({
-							tag: 'select',
-							class: 'form-select form-select-sm',
-							value: player?.team?.toFixed(),
-							name: 'team',
-							content: n_option_list(state.team_list, '(Team)'),
-						}),
-					],
-				}),
-				n({
-					tag: 'button',
-					class: 'm-1 btn btn-primary btn-sm',
-					type: 'submit',
-					content: 'Submit',
-				}),
-				n({
-					tag: 'button',
-					class: 'm-1 btn btn-secondary btn-sm',
-					type: 'button',
-					click: () => {
-						element_list.forEach(element => element.classList.toggle('d-none'));
-					},
-					content: 'Cancel',
-				}),
+				n_form_submit(),
+				n_form_cancel(element_list),
 			],
 		}));
 		return n({
