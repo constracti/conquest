@@ -85,10 +85,36 @@
 			<div class="m-2 list-group d-none" id="team-list"></div>
 			<div class="d-flex flex-row justify-content-between align-items-center">
 				<h3 class="m-2">Players</h3>
-				<button class="m-2 btn btn-secondary btn-sm" id="player-toggle" data-toggle="Hide">Show</button>
+				<div class="d-flex flex-row">
+					<button class="m-2 btn btn-secondary btn-sm" id="import-show">Import</button>
+					<button class="m-2 btn btn-secondary btn-sm" id="player-toggle" data-toggle="Hide">Show</button>
+				</div>
 			</div>
 			<div class="m-2 list-group d-none" id="player-list"></div>
 		</div>
+		<div class="modal fade" id="import-div">
+			<div class="modal-dialog modal-dialog-centered modal-lg">
+				<form class="modal-content" id="import-form">
+					<div class="modal-header p-2">
+						<h4 class="m-2">Import players</h4>
+					</div>
+					<div class="modal-body p-2">
+						<div class="m-2">
+							<textarea class="form-control" id="import-textarea" name="text" required="required" rows="10"></textarea>
+							<div class="form-text">
+								Each line consists of the player mark, name and team, divided by a tab character.
+								Empty lines are ignored.
+							</div>
+						</div>
+					</div>
+					<div class="modal-footer d-flex flex-row justify-content-end p-2">
+						<button type="submit" class="m-2 btn btn-danger">Submit</button>
+						<button type="button" class="m-2 btn btn-secondary" id="import-cancel">Cancel</button>
+					</div>
+				</form>
+			</div>
+		</div>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"></script>
 		<script src="color-mode.js"></script>
 		<script type="module" src="game.js"></script>
 	</body>

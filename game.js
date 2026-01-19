@@ -1166,6 +1166,74 @@ player_toggle.addEventListener('click', () => {
  */
 const player_list = document.getElementById('player-list');
 
+/**
+ * @type {HTMLButtonElement}
+ */
+const import_show = document.getElementById('import-show');
+import_show.addEventListener('click', () => {
+	import_modal.show();
+});
+
+/**
+ * @type {HTMLDivElement}
+ */
+const import_div = document.getElementById('import-div');
+import_div.addEventListener('shown.bs.modal', () => {
+	import_textarea.focus();
+});
+
+const import_modal = new bootstrap.Modal(import_div, {
+	backdrop: 'static',
+	keyboard: false,
+});
+
+/**
+ * @type {HTMLFormElement}
+ */
+const import_form = document.getElementById('import-form');
+import_form.addEventListener('submit', async event => {
+	event.preventDefault();
+	if (!spinner_div.classList.contains('d-none'))
+		return;
+	spinner_div.classList.remove('d-none');
+	if (!confirm('Delete all existing players and related successes?')) {
+		spinner_div.classList.add('d-none');
+		return;
+	}
+	const form_data = new FormData(import_form);
+	form_data.append('game', state.game.id);
+	form_data.append('password', state.password);
+	/**
+	 * @type {Player[]|{error: string, line: number}}
+	 */
+	const result = await api.post('player2_import', form_data);
+	if ('error' in result) {
+		alert(`Error at line ${result.line.toFixed()}: ${result.error}`);
+		spinner_div.classList.add('d-none');
+		return;
+	}
+	state.player_list = result;
+	spinner_div.classList.add('d-none');
+	import_form.reset();
+	import_modal.hide();
+	if (player_list.classList.contains('d-none'))
+		player_toggle.dispatchEvent(new Event('click'));
+	render();
+});
+
+/**
+ * @type {HTMLTextAreaElement}
+ */
+const import_textarea = document.getElementById('import-textarea');
+
+/**
+ * @type {HTMLButtonElement}
+ */
+const import_cancel = document.getElementById('import-cancel');
+import_cancel.addEventListener('click', () => {
+	import_modal.hide();
+});
+
 (async () => {
 	const id = localStorage.getItem('id');
 	const password = localStorage.getItem('password');
