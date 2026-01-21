@@ -9,9 +9,9 @@
 		<link rel="stylesheet" href="game.css">
 	</head>
 	<body class="container d-flex flex-column p-2">
-		<div class="m-2 d-flex flex-row justify-content-between align-items-center">
+		<div class="d-flex flex-row justify-content-between align-items-center">
 			<h1 class="m-2">The Station War</h1>
-			<div class="spinner-border d-none" id="spinner-div"></div>
+			<div class="m-2 spinner-border d-none" id="spinner-div"></div>
 		</div>
 		<h2 class="m-2">Game</h2>
 		<form class="m-2 border rounded d-none d-flex flex-column p-2" id="login-form">
@@ -34,25 +34,49 @@
 		</form>
 		<form class="m-2 border rounded d-none d-flex flex-column p-2" id="register-form">
 			<h3 class="m-2">Register</h3>
-			<div class="m-2">
-				<label class="form-label" for="register-id">Identifier</label>
-				<span class="text-danger">*</span>
-				<input class="form-control" id="register-id" name="id" required="required" pattern="[\-a-z0-9]{1,255}">
-				<div class="form-text">Only small latin letters, arithmetic digits and dashes ("-") are allowed.</div>
-			</div>
-			<div class="m-2">
-				<label class="form-label" for="register-name">Name</label>
-				<input class="form-control" id="register-name" name="name">
-			</div>
-			<div class="m-2">
-				<label class="form-label" for="register-password">Password</label>
-				<span class="text-danger">*</span>
-				<input class="form-control" id="register-password" name="password" type="password" required="required">
-			</div>
-			<div class="m-2">
-				<label class="form-label" for="register-spellcheck">Retype Password</label>
-				<span class="text-danger">*</span>
-				<input class="form-control" id="register-spellcheck" type="password">
+			<div class="mx-0 row">
+				<div class="col-12 px-0">
+					<div class="m-2">
+						<label class="form-label" for="register-id">Identifier</label>
+						<span class="text-danger">*</span>
+						<input class="form-control" id="register-id" name="id" required="required" pattern="[\-a-z0-9]{1,255}">
+						<div class="form-text">Only small latin letters, arithmetic digits and dashes ("-") are allowed.</div>
+					</div>
+				</div>
+				<div class="col-12 px-0">
+					<div class="m-2">
+						<label class="form-label" for="register-name">Name</label>
+						<input class="form-control" id="register-name" name="name">
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 px-0">
+					<div class="m-2">
+						<label class="form-label" for="register-password">Password</label>
+						<span class="text-danger">*</span>
+						<input class="form-control" id="register-password" name="password" type="password" required="required">
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 px-0">
+					<div class="m-2">
+						<label class="form-label" for="register-spellcheck">Retype Password</label>
+						<span class="text-danger">*</span>
+						<input class="form-control" id="register-spellcheck" type="password">
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 px-0">
+					<div class="m-2">
+						<label class="form-label" for="register-start">Game start</label>
+						<span class="text-danger">*</span>
+						<input class="form-control" id="register-start" name="game_start" type="datetime-local" required="required">
+					</div>
+				</div>
+				<div class="col-12 col-sm-6 px-0">
+					<div class="m-2">
+						<label class="form-label" for="register-stop">Game stop</label>
+						<span class="text-danger">*</span>
+						<input class="form-control" id="register-stop" name="game_stop" type="datetime-local" required="required">
+					</div>
+				</div>
 			</div>
 			<div class="d-flex flex-row justify-content-between align-items-center">
 				<button class="m-2 btn btn-primary">Submit</button>
@@ -64,8 +88,52 @@
 				<code class="m-2 fs-3" id="id-block"></code>
 				<button class="m-2 btn btn-secondary" id="logout-button">Logout</button>
 			</div>
-			<h3 class="m-2">Name</h3>
-			<div class="m-2 border rounded d-flex flex-row align-items-center p-1" id="name-block"></div>
+			<form class="m-2 border rounded p-2" id="game-form">
+				<div class="mx-0 row">
+					<div class="col-12 px-0">
+						<div class="m-2">
+							<label class="form-label" for="name-input">Name</label>
+							<input class="form-control" id="name-input" name="name">
+						</div>
+					</div>
+					<div class="col-12 col-sm-6 px-0">
+						<div class="m-2">
+							<label class="form-label" for="game-start-input">Game start</label>
+							<input class="form-control" id="game-start-input" name="game_start" type="datetime-local" required="required">
+						</div>
+					</div>
+					<div class="col-12 col-sm-6 px-0">
+						<div class="m-2">
+							<label class="form-label" for="game-stop-input">Game stop</label>
+							<input class="form-control" id="game-stop-input" name="game_stop" type="datetime-local" required="required">
+						</div>
+					</div>
+					<div class="col-12 col-sm-6 col-lg-3 px-0">
+						<div class="m-2">
+							<label class="form-label" for="reward-success-input">Success points</label>
+							<input class="form-control" id="reward-success-input" name="reward_success" type="number" min="0" required="required">
+						</div>
+					</div>
+					<div class="col-12 col-sm-6 col-lg-3 px-0">
+						<div class="m-2">
+							<label class="form-label" for="reward-conquest-input">Conquest points per minute</label>
+							<input class="form-control" id="reward-conquest-input" name="reward_conquest" type="number" min="0" required="required">
+						</div>
+					</div>
+					<div class="col-12 col-lg-6 px-0">
+						<div class="m-2">
+							<label class="form-label" for="reward-rate-input">Point value increase rate per hour</label>
+							<input class="form-control" id="reward-rate-input" name="reward_rate" type="number" min="0" step="any" required="required">
+							<div class="form-text">Initial point value: 1.00 - Final point value: <span id="reward-rate-preview"></span></div>
+						</div>
+					</div>
+					<div class="col-12 px-0">
+						<div class="m-2">
+							<button class="btn btn-primary" type="submit">Submit</button>
+						</div>
+					</div>
+				</div>
+			</form>
 			<h3 class="m-2">Map</h3>
 			<div class="m-2 border rounded d-flex flex-row align-items-center p-1" id="map-block"></div>
 			<div class="d-flex flex-row justify-content-between align-items-center">

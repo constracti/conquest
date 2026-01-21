@@ -154,9 +154,18 @@ function get_game_state(DT $now, DT $game_start, DT $game_stop): string {
 
 function game_select_by_id(string $id): ?array {
 	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name`, `map` FROM `game` WHERE `id` = ?');
+	$stmt = $db->prepare('
+	SELECT `id`, `name`, `game_start`, `game_stop`, `reward_success`, `reward_conquest`, `reward_rate`, `map`
+	FROM `game`
+	WHERE `id` = ?
+	');
 	$stmt->bind_param('s', $id);
-	return stmt_item($stmt);
+	$item = stmt_item($stmt);
+	if (is_null($item))
+		return NULL;
+	$item['game_start'] = DT::from_int($item['game_start'])->to_js();
+	$item['game_stop'] = DT::from_int($item['game_stop'])->to_js();
+	return $item;
 }
 
 function game_exists(string $id): bool {
@@ -176,19 +185,34 @@ function game_matches(string $id, string $password): bool {
 	return password_verify($password, $hash);
 }
 
-function game_insert(string $id, ?string $name, string $password): void {
+function game_insert(
+	string $id, ?string $name, string $password,
+	DT $game_start, DT $game_stop,
+	int $reward_success, int $reward_conquest, float $reward_rate,
+): void {
 	global $db;
 	$hash = password_hash($password, PASSWORD_DEFAULT);
-	$stmt = $db->prepare('INSERT INTO `game` (`id`, `name`, `hash`) VALUES (?, ?, ?)');
-	$stmt->bind_param('sss', $id, $name, $hash);
+	$game_start = $game_start->to_int();
+	$game_stop = $game_stop->to_int();
+	$stmt = $db->prepare('
+	INSERT INTO `game` (`id`, `name`, `hash`, `game_start`, `game_stop`, `reward_success`, `reward_conquest`, `reward_rate`)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	');
+	$stmt->bind_param('sssiiiid', $id, $name, $hash, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate);
 	$stmt->execute();
 	$stmt->close();
 }
 
-function game_update_name(string $id, ?string $name): void {
+function game_update(string $id, ?string $name, DT $game_start, DT $game_stop, int $reward_success, int $reward_conquest, float $reward_rate): void {
 	global $db;
-	$stmt = $db->prepare('UPDATE `game` SET `name` = ? WHERE `id` = ?');
-	$stmt->bind_param('ss', $name, $id);
+	$game_start = $game_start->to_int();
+	$game_stop = $game_stop->to_int();
+	$stmt = $db->prepare('
+	UPDATE `game`
+	SET `name` = ?, `game_start` = ?, `game_stop` = ?, `reward_success` = ?, `reward_conquest` = ?, `reward_rate` = ?
+	WHERE `id` = ?
+	');
+	$stmt->bind_param('siiiids', $name, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $id);
 	$stmt->execute();
 	$stmt->close();
 }
@@ -719,7 +743,16 @@ if (is_post('game_register')) {
 		json(NULL);
 	$name = post_string_nullable('name');
 	$password = post_string('password');
-	game_insert($id, $name, $password);
+	$game_start = post_string('game_start');
+	$game_start = DT::from_js($game_start);
+	$game_stop = post_string('game_stop');
+	$game_stop = DT::from_js($game_stop);
+	if ($game_stop->to_int() < $game_start->to_int())
+		exit('game_stop');
+	$reward_success = 300;
+	$reward_conquest = 140;
+	$reward_rate = 0.0;
+	game_insert($id, $name, $password, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate);
 	json([
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
@@ -747,13 +780,22 @@ if (is_post('game_login')) {
 
 // TODO manage game: delete, clone, change password
 
-if (is_post('game_update_name')) {
+if (is_post('game_update')) {
 	$id = post_slug('id');
 	$password = post_string('password');
 	if (!game_matches($id, $password))
 		exit('password');
 	$name = post_string_nullable('name');
-	game_update_name($id, $name);
+	$game_start = post_string('game_start');
+	$game_start = DT::from_js($game_start);
+	$game_stop = post_string('game_stop');
+	$game_stop = DT::from_js($game_stop);
+	if ($game_stop->to_int() < $game_start->to_int())
+		exit('game_stop');
+	$reward_success = post_int('reward_success');
+	$reward_conquest = post_int('reward_conquest');
+	$reward_rate = post_float('reward_rate');
+	game_update($id, $name, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate);
 	json(game_select_by_id($id));
 }
 
