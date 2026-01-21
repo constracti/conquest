@@ -6,6 +6,11 @@ import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_
  * @type {object}
  * @property {string} id
  * @property {?string} name
+ * @property {string} game_start
+ * @property {string} game_stop
+ * @property {number} reward_success
+ * @property {number} reward_conquest
+ * @property {number} reward_rate
  * @property {?string} map
  */
 
@@ -91,72 +96,15 @@ function render() {
 }
 
 function render_name() {
-	name_block.innerHTML = '';
-	const element_list = [
-		n({
-			class: 'm-1 flex-grow-1',
-			content: state.game.name,
-		}),
-		n({
-			tag: 'button',
-			class: 'm-1 btn btn-secondary btn-sm',
-			type: 'button',
-			click: () => {
-				element_list.forEach(element => element.classList.toggle('d-none'));
-			},
-			content: 'Edit',
-		}),
-		n({
-			tag: 'form',
-			class: 'd-none flex-grow-1 d-flex flex-row align-items-center',
-			submit: async event => {
-				event.preventDefault();
-				if (!spinner_div.classList.contains('d-none'))
-					return;
-				spinner_div.classList.remove('d-none');
-				const form_data = new FormData(event.currentTarget);
-				form_data.append('id', state.game.id);
-				form_data.append('password', state.password);
-				/**
-				 * @type {Game}
-				 */
-				const result = await api.post('game_update_name', form_data);
-				state.game = result;
-				spinner_div.classList.add('d-none');
-				render();
-			},
-			content: [
-				n({
-					class: 'm-1 flex-grow-1',
-					content: [
-						n({
-							tag: 'input',
-							class: 'form-control form-control-sm',
-							value: state.game.name ?? '',
-							name: 'name',
-							placeholder: 'Name',
-						}),
-					],
-				}),
-				n({
-					tag: 'button',
-					class: 'm-1 btn btn-primary btn-sm',
-					type: 'submit',
-					content: 'Submit',
-				}),
-				n({
-					tag: 'button',
-					class: 'm-1 btn btn-secondary btn-sm',
-					type: 'button',
-					click: () => {
-						element_list.forEach(element => element.classList.toggle('d-none'));
-					},
-					content: 'Cancel',
-				}),
-			],
-		}),
-	];
-	name_block.append(...element_list);
+	name_input.value = state.game.name ?? '';
+	game_start_input.value = state.game.game_start;
+	game_start_input.dispatchEvent(new Event('change'));
+	game_stop_input.value = state.game.game_stop;
+	game_stop_input.dispatchEvent(new Event('change'));
+	reward_success_input.value = state.game.reward_success.toFixed();
+	reward_conquest_input.value = state.game.reward_conquest.toFixed();
+	reward_rate_input.value = state.game.reward_rate.toString();
+	reward_rate_input.dispatchEvent(new Event('change'));
 }
 
 function render_map() {
@@ -1030,6 +978,24 @@ document.getElementById('register-button').addEventListener('click', () => {
 });
 
 /**
+ * @type {HTMLInputElement}
+ */
+const register_start = document.getElementById('register-start');
+
+/**
+ * @type {HTMLInputElement}
+ */
+const register_stop = document.getElementById('register-stop');
+
+register_start.addEventListener('change', () => {
+	register_stop.min = register_start.value;
+});
+
+register_stop.addEventListener('change', () => {
+	register_start.max = register_stop.value;
+});
+
+/**
  * @type {HTMLFormElement}
  */
 const register_form = document.getElementById('register-form');
@@ -1101,9 +1067,83 @@ document.getElementById('logout-button').addEventListener('click', () => {
 });
 
 /**
- * @type {HTMLDivElement}
+ * @type {HTMLFormElement}
  */
-const name_block = document.getElementById('name-block');
+const game_form = document.getElementById('game-form');
+
+game_form.addEventListener('submit', async event => {
+	event.preventDefault();
+	if (!spinner_div.classList.contains('d-none'))
+		return;
+	spinner_div.classList.remove('d-none');
+	const form_data = new FormData(event.currentTarget);
+	form_data.append('id', state.game.id);
+	form_data.append('password', state.password);
+	/**
+	 * @type {Game}
+	 */
+	const result = await api.post('game_update', form_data);
+	state.game = result;
+	spinner_div.classList.add('d-none');
+	render();
+});
+
+/**
+ * @type {HTMLInputElement}
+ */
+const name_input = document.getElementById('name-input');
+
+/**
+ * @type {HTMLInputElement}
+ */
+const game_start_input = document.getElementById('game-start-input');
+
+/**
+ * @type {HTMLInputElement}
+ */
+const game_stop_input = document.getElementById('game-stop-input');
+
+game_start_input.addEventListener('change', () => {
+	game_stop_input.min = game_start_input.value;
+});
+
+game_stop_input.addEventListener('change', () => {
+	game_start_input.max = game_stop_input.value;
+});
+
+/**
+ * @type {HTMLInputElement}
+ */
+const reward_success_input = document.getElementById('reward-success-input');
+
+/**
+ * @type {HTMLInputElement}
+ */
+const reward_conquest_input = document.getElementById('reward-conquest-input');
+
+/**
+ * @type {HTMLInputElement}
+ */
+const reward_rate_input = document.getElementById('reward-rate-input');
+
+/**
+ * @type {HTMLSpanElement}
+ */
+const reward_rate_preview = document.getElementById('reward-rate-preview');
+
+[game_start_input, game_stop_input, reward_rate_input].forEach(element => {
+	element.addEventListener('change', () => {
+		const game_start = Date.parse(game_start_input.value);
+		const game_stop = Date.parse(game_stop_input.value);
+		const game_duration_in_hours = (game_stop - game_start) / (60 * 60 * 1000);
+		const reward_rate = parseFloat(reward_rate_input.value);
+		const reward_rate_begin = 1;
+		const reward_rate_end = reward_rate_begin + reward_rate * game_duration_in_hours;
+		if (isNaN(reward_rate_end))
+			return;
+		reward_rate_preview.innerHTML = reward_rate_end.toFixed(2);
+	});
+});
 
 /**
  * @type {HTMLDivElement}
@@ -1200,7 +1240,7 @@ import_form.addEventListener('submit', async event => {
 		spinner_div.classList.add('d-none');
 		return;
 	}
-	const form_data = new FormData(import_form);
+	const form_data = new FormData(event.currentTarget);
 	form_data.append('game', state.game.id);
 	form_data.append('password', state.password);
 	/**
@@ -1234,7 +1274,7 @@ import_cancel.addEventListener('click', () => {
 	import_modal.hide();
 });
 
-(async () => {
+await (async () => {
 	const id = localStorage.getItem('id');
 	const password = localStorage.getItem('password');
 	if (id === null || password === null) {
