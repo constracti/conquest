@@ -4,8 +4,9 @@ import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_
 /**
  * @typedef Game
  * @type {object}
- * @property {string} id
- * @property {?string} name
+ * @property {number} id
+ * @property {string} name
+ * @property {?string} title
  * @property {string} game_start
  * @property {string} game_stop
  * @property {number} reward_success
@@ -86,8 +87,8 @@ function render() {
 	login_form.classList.add('d-none');
 	register_form.classList.add('d-none');
 	main_div.classList.remove('d-none');
-	id_block.innerHTML = `<code>${state.game.id}</code>`;
-	render_name();
+	name_block.innerHTML = `<code>${state.game.name}</code>`;
+	render_game();
 	render_map();
 	render_polygon();
 	render_station();
@@ -95,8 +96,8 @@ function render() {
 	render_player();
 }
 
-function render_name() {
-	name_input.value = state.game.name ?? '';
+function render_game() {
+	title_input.value = state.game.title ?? '';
 	game_start_input.value = state.game.game_start;
 	game_start_input.dispatchEvent(new Event('change'));
 	game_stop_input.value = state.game.game_stop;
@@ -146,7 +147,7 @@ function render_map() {
 					return;
 				}
 				const form_data = new FormData();
-				form_data.append('id', state.game.id);
+				form_data.append('id', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				/**
 				 * @type {Game}
@@ -167,7 +168,7 @@ function render_map() {
 					return;
 				spinner_div.classList.remove('d-none');
 				const form_data = new FormData(event.currentTarget);
-				form_data.append('id', state.game.id);
+				form_data.append('id', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				const file = form_data.get('map');
 				const size_limit_kb = 256;
@@ -414,7 +415,7 @@ function render_polygon() {
 						return;
 					}
 					const form_data = new FormData();
-					form_data.append('game', state.game.id);
+					form_data.append('game', state.game.id.toFixed());
 					form_data.append('password', state.password);
 					form_data.append('id', polygon.id.toFixed());
 					/**
@@ -449,7 +450,7 @@ function render_polygon() {
 					return;
 				spinner_div.classList.remove('d-none');
 				const form_data = new FormData(event.currentTarget);
-				form_data.append('game', state.game.id);
+				form_data.append('game', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				/**
 				 * @type {Polygon[]}
@@ -551,7 +552,7 @@ function render_station() {
 						return;
 					}
 					const form_data = new FormData();
-					form_data.append('game', state.game.id);
+					form_data.append('game', state.game.id.toFixed());
 					form_data.append('password', state.password);
 					form_data.append('id', station.id.toFixed());
 					/**
@@ -576,7 +577,7 @@ function render_station() {
 					return;
 				spinner_div.classList.remove('d-none');
 				const form_data = new FormData(event.currentTarget);
-				form_data.append('game', state.game.id);
+				form_data.append('game', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				/**
 				 * @type {Station[]}
@@ -697,7 +698,7 @@ function render_team() {
 						return;
 					}
 					const form_data = new FormData();
-					form_data.append('game', state.game.id);
+					form_data.append('game', state.game.id.toFixed());
 					form_data.append('password', state.password);
 					form_data.append('id', team.id.toFixed());
 					/**
@@ -725,7 +726,7 @@ function render_team() {
 					return;
 				spinner_div.classList.remove('d-none');
 				const form_data = new FormData(event.currentTarget);
-				form_data.append('game', state.game.id);
+				form_data.append('game', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				/**
 				 * @type {Team[]|null}
@@ -848,7 +849,7 @@ function render_player() {
 						return;
 					}
 					const form_data = new FormData();
-					form_data.append('game', state.game.id);
+					form_data.append('game', state.game.id.toFixed());
 					form_data.append('password', state.password);
 					form_data.append('id', player.id.toFixed());
 					/**
@@ -873,7 +874,7 @@ function render_player() {
 					return;
 				spinner_div.classList.remove('d-none');
 				const form_data = new FormData(event.currentTarget);
-				form_data.append('game', state.game.id);
+				form_data.append('game', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				/**
 				 * @type {Player[]|null}
@@ -951,14 +952,14 @@ login_form.addEventListener('submit', async event => {
 	const result = await api.post('game_login', form_data);
 	if (typeof(result) === 'string') {
 		if (result !== 'password')
-			alert('Identifier is not found.');
+			alert('Name is wrong.');
 		else
 			alert('Password is wrong.')
 		spinner_div.classList.add('d-none');
 		return;
 	}
 	login_form.reset();
-	localStorage.setItem('id', form_data.get('id'));
+	localStorage.setItem('name', form_data.get('name'));
 	localStorage.setItem('password', form_data.get('password'));
 	state = {
 		game: result.game,
@@ -1030,7 +1031,7 @@ register_form.addEventListener('submit', async event => {
 		return;
 	}
 	register_form.reset();
-	localStorage.setItem('id', form_data.get('id'));
+	localStorage.setItem('name', form_data.get('name'));
 	localStorage.setItem('password', form_data.get('password'));
 	state = {
 		game: result.game,
@@ -1057,7 +1058,7 @@ const main_div = document.getElementById('main-div');
 /**
  * @type {HTMLSpanElement}
  */
-const id_block = document.getElementById('id-block');
+const name_block = document.getElementById('name-block');
 
 document.getElementById('logout-button').addEventListener('click', () => {
 	localStorage.removeItem('id');
@@ -1077,7 +1078,7 @@ game_form.addEventListener('submit', async event => {
 		return;
 	spinner_div.classList.remove('d-none');
 	const form_data = new FormData(event.currentTarget);
-	form_data.append('id', state.game.id);
+	form_data.append('id', state.game.id.toFixed());
 	form_data.append('password', state.password);
 	/**
 	 * @type {Game}
@@ -1091,7 +1092,7 @@ game_form.addEventListener('submit', async event => {
 /**
  * @type {HTMLInputElement}
  */
-const name_input = document.getElementById('name-input');
+const title_input = document.getElementById('title-input');
 
 /**
  * @type {HTMLInputElement}
@@ -1241,7 +1242,7 @@ import_form.addEventListener('submit', async event => {
 		return;
 	}
 	const form_data = new FormData(event.currentTarget);
-	form_data.append('game', state.game.id);
+	form_data.append('game', state.game.id.toFixed());
 	form_data.append('password', state.password);
 	/**
 	 * @type {Player[]|{error: string, line: number}}
@@ -1275,14 +1276,14 @@ import_cancel.addEventListener('click', () => {
 });
 
 await (async () => {
-	const id = localStorage.getItem('id');
+	const name = localStorage.getItem('name');
 	const password = localStorage.getItem('password');
-	if (id === null || password === null) {
+	if (name === null || password === null) {
 		render();
 		return;
 	}
 	const form_data = new FormData();
-	form_data.set('id', id);
+	form_data.set('name', name);
 	form_data.set('password', password);
 	/**
 	 * @type {Login|string}

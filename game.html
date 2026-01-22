@@ -17,9 +17,9 @@
 		<form class="m-2 border rounded d-none d-flex flex-column p-2" id="login-form">
 			<h3 class="m-2">Login</h3>
 			<div class="m-2">
-				<label class="form-label" for="login-id">Identifier</label>
+				<label class="form-label" for="login-name">Name</label>
 				<span class="text-danger">*</span>
-				<input class="form-control" id="login-id" name="id" required="required" pattern="[\-a-z0-9]{1,255}">
+				<input class="form-control" id="login-name" name="name" required="required" pattern="[\-a-z0-9]{1,255}">
 				<div class="form-text">Only small latin letters, arithmetic digits and dashes ("-") are allowed.</div>
 			</div>
 			<div class="m-2">
@@ -37,16 +37,19 @@
 			<div class="mx-0 row">
 				<div class="col-12 px-0">
 					<div class="m-2">
-						<label class="form-label" for="register-id">Identifier</label>
+						<label class="form-label" for="register-name">Name</label>
 						<span class="text-danger">*</span>
-						<input class="form-control" id="register-id" name="id" required="required" pattern="[\-a-z0-9]{1,255}">
-						<div class="form-text">Only small latin letters, arithmetic digits and dashes ("-") are allowed.</div>
+						<input class="form-control" id="register-name" name="name" required="required" pattern="[\-a-z0-9]{1,255}">
+						<div class="form-text">
+							This cannot change in the future.
+							Only small latin letters, arithmetic digits and dashes ("-") are allowed.
+						</div>
 					</div>
 				</div>
 				<div class="col-12 px-0">
 					<div class="m-2">
-						<label class="form-label" for="register-name">Name</label>
-						<input class="form-control" id="register-name" name="name">
+						<label class="form-label" for="register-title">Title</label>
+						<input class="form-control" id="register-title" name="title">
 					</div>
 				</div>
 				<div class="col-12 col-sm-6 px-0">
@@ -85,15 +88,15 @@
 		</form>
 		<div class="d-none d-flex flex-column" id="main-div">
 			<div class="d-flex flex-row justify-content-between align-items-center">
-				<code class="m-2 fs-3" id="id-block"></code>
+				<code class="m-2 fs-3" id="name-block"></code>
 				<button class="m-2 btn btn-secondary" id="logout-button">Logout</button>
 			</div>
 			<form class="m-2 border rounded p-2" id="game-form">
 				<div class="mx-0 row">
 					<div class="col-12 px-0">
 						<div class="m-2">
-							<label class="form-label" for="name-input">Name</label>
-							<input class="form-control" id="name-input" name="name">
+							<label class="form-label" for="title-input">Title</label>
+							<input class="form-control" id="title-input" name="title">
 						</div>
 					</div>
 					<div class="col-12 col-sm-6 px-0">
