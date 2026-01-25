@@ -35,7 +35,7 @@ function post_slug_nullable(string $key): ?string {
 		return NULL;
 	$value = filter_var($value, FILTER_VALIDATE_REGEXP, [
 		'options' => [
-			'regexp' => '/^[-a-z0-9]{1,255}$/',
+			'regexp' => '/^[-a-z0-9]{1,50}$/',
 		],
 	]);
 	if ($value === FALSE)
