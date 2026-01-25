@@ -48,7 +48,7 @@ import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_
  * @property {number} id
  * @property {string} name
  * @property {string} mark
- * @property {?number} team
+ * @property {?number} team - TODO make team mandatory
  */
 
 /**
@@ -87,7 +87,7 @@ function render() {
 	login_form.classList.add('d-none');
 	register_form.classList.add('d-none');
 	main_div.classList.remove('d-none');
-	name_block.innerHTML = `<code>${state.game.name}</code>`;
+	name_block.innerHTML = state.game.name;
 	render_game();
 	render_map();
 	render_polygon();
@@ -1061,7 +1061,7 @@ const main_div = document.getElementById('main-div');
 const name_block = document.getElementById('name-block');
 
 document.getElementById('logout-button').addEventListener('click', () => {
-	localStorage.removeItem('id');
+	localStorage.removeItem('name');
 	localStorage.removeItem('password');
 	state = null;
 	render();

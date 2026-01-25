@@ -285,6 +285,13 @@ function station2_belongs_to_game(int $id, int $game): bool {
 	return stmt_bool($stmt);
 }
 
+function station2_matches(int $id, string $code): bool {
+	global $db;
+	$stmt = $db->prepare('SELECT `id` FROM `station` WHERE `id` = ? AND `code` = ?');
+	$stmt->bind_param('is', $id, $code);
+	return stmt_bool($stmt);
+}
+
 function station2_identify_by_polygon(int $polygon): ?int {
 	global $db;
 	$stmt = $db->prepare('SELECT `id` FROM `station2` WHERE `polygon` = ? LIMIT 1');
@@ -1014,6 +1021,9 @@ if (is_post('player2_import')) {
 	json(player2_select_by_game($game));
 }
 
+// TODO win truncate
+
+// TODO delete POST admin_login
 if (is_post('admin_login')) {
 	$password = post_string('password');
 	if ($password !== ADMIN_PASS)
@@ -1031,39 +1041,68 @@ if (is_post('admin_login')) {
 	]);
 }
 
-if (is_post('admin_config')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$game_start = post_string('game_start');
-	$game_start = DT::from_js($game_start);
-	$game_stop = post_string('game_stop');
-	$game_stop = DT::from_js($game_stop);
-	if ($game_stop->to_int() < $game_start->to_int())
-		exit('game_stop');
-	$reward_success = post_int('reward_success');
-	if ($reward_success < 0)
-		exit('reward_success');
-	$reward_conquest = post_int('reward_conquest');
-	if ($reward_conquest < 0)
-		exit('reward_conquest');
-	$reward_rate = post_float('reward_rate');
-	if ($reward_rate < 0)
-		exit('reward_rate');
-	config_set('game_start', $game_start->to_int());
-	config_set('game_stop', $game_stop->to_int());
-	config_set('reward_success', $reward_success);
-	config_set('reward_conquest', $reward_conquest);
-	config_set('reward_rate', $reward_rate);
-	json(NULL);
+if (is_post('station2_list')) {
+	$game = post_string('game');
+	$game = game_identify_by_name($game);
+	if (is_null($game))
+		exit('game');
+	$station_list = station2_select_by_game($game);
+	$station_list = array_map(function(array $station): array {
+		return [
+			'id' => $station['id'],
+			'name' => $station['name'],
+			'capacity' => $station['capacity'],
+		];
+	}, $station_list);
+	json([
+		'game' => game_select_by_id($game),
+		'station_list' => $station_list,
+	]);
 }
 
-if (is_post('success_truncate')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	success_truncate();
-	json(NULL);
+if (is_post('station2_login')) {
+	$game = post_string('game');
+	$game = game_identify_by_name($game);
+	if (is_null($game))
+		exit('game');
+	$station = post_int('station');
+	if (!station2_belongs_to_game($station, $game))
+		exit('station');
+	$code = post_string('code');
+	if (!station2_matches($station, $code))
+		json(NULL);
+	json([
+		'team_list' => team2_select_by_game($game),
+		'player_list' => player2_select_by_game($game),
+	]);
+}
+
+if (is_post('win_insert')) {
+	$game = post_string('game');
+	$game = game_identify_by_name($game);
+	if (is_null($game))
+		exit('game');
+	$station = post_int('station');
+	if (!station2_belongs_to_game($station, $game))
+		exit('station');
+	$code = post_string('code');
+	if (!station2_matches($station, $code))
+		exit('code');
+	json(NULL); // TODO win insert
+}
+
+if (is_post('win_delete')) {
+	$game = post_string('game');
+	$game = game_identify_by_name($game);
+	if (is_null($game))
+		exit('game');
+	$station = post_int('station');
+	if (!station2_belongs_to_game($station, $game))
+		exit('station');
+	$code = post_string('code');
+	if (!station2_matches($station, $code))
+		exit('code');
+	json(NULL); // TODO win delete
 }
 
 if (is_get('station_list')) {
