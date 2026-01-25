@@ -59,7 +59,7 @@ function set_title(title) {
  * @type {string}
  */
 const app_name = await api.get('app_name');
-set_title(app_name);
+set_title(app_name); // TODO is this necessary?
 
 /**
  * css expression resulting in a contrasting black or white color,
