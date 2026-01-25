@@ -19,8 +19,7 @@
 			<div class="m-2">
 				<label class="form-label" for="login-name">Name</label>
 				<span class="text-danger">*</span>
-				<input class="form-control" id="login-name" name="name" required="required" pattern="[\-a-z0-9]{1,255}">
-				<div class="form-text">Only small latin letters, arithmetic digits and dashes ("-") are allowed.</div>
+				<input class="form-control" id="login-name" name="name" required="required" pattern="[\-a-z0-9]{1,50}">
 			</div>
 			<div class="m-2">
 				<label class="form-label" for="login-password">Password</label>
@@ -39,10 +38,11 @@
 					<div class="m-2">
 						<label class="form-label" for="register-name">Name</label>
 						<span class="text-danger">*</span>
-						<input class="form-control" id="register-name" name="name" required="required" pattern="[\-a-z0-9]{1,255}">
+						<input class="form-control" id="register-name" name="name" required="required" pattern="[\-a-z0-9]{1,50}">
 						<div class="form-text">
 							This cannot change in the future.
-							Only small latin letters, arithmetic digits and dashes ("-") are allowed.
+							Only small latin letters, arithmetic digits and dashes ("-") are accepted.
+							At most 50 characters are allowed.
 						</div>
 					</div>
 				</div>
