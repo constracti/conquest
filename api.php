@@ -400,7 +400,7 @@ function player2_identify_by_mark(string $mark, int $game): ?int {
 	return stmt_cell($stmt);
 }
 
-function player2_insert(string $name, string $mark, ?int $team, int $game): void {
+function player2_insert(string $name, string $mark, int $team, int $game): void {
 	global $db;
 	$stmt = $db->prepare('INSERT INTO `player2` (`name`, `mark`, `team`, `game`) VALUES (?, ?, ?, ?)');
 	$stmt->bind_param('ssii', $name, $mark, $team, $game);
@@ -408,7 +408,7 @@ function player2_insert(string $name, string $mark, ?int $team, int $game): void
 	$stmt->close();
 }
 
-function player2_update(int $id, string $name, string $mark, ?int $team): void {
+function player2_update(int $id, string $name, string $mark, int $team): void {
 	global $db;
 	$stmt = $db->prepare('UPDATE `player2` SET `name` = ?, `mark` = ?, `team` = ? WHERE `id` = ?');
 	$stmt->bind_param('ssii', $name, $mark, $team, $id);
@@ -923,8 +923,8 @@ if (is_post('player2_insert')) {
 	$mark = post_string('mark');
 	if (!is_null(player2_identify_by_mark($mark, $game)))
 		json(NULL);
-	$team = post_int_nullable('team');
-	if (!is_null($team) && !team2_belongs_to_game($team, $game))
+	$team = post_int('team');
+	if (!team2_belongs_to_game($team, $game))
 		exit('team');
 	player2_insert($name, $mark, $team, $game);
 	json(player2_select_by_game($game));
@@ -943,8 +943,8 @@ if (is_post('player2_update')) {
 	$player = player2_identify_by_mark($mark, $game);
 	if (!is_null($player) && $player !== $id)
 		json(NULL);
-	$team = post_int_nullable('team');
-	if (!is_null($team) && !team2_belongs_to_game($team, $game))
+	$team = post_int('team');
+	if (!team2_belongs_to_game($team, $game))
 		exit('team');
 	player2_update($id, $name, $mark, $team);
 	json(player2_select_by_game($game));
@@ -990,13 +990,9 @@ if (is_post('player2_import')) {
 		$mark_list[] = $mark;
 		if (mb_strlen($name) === 0)
 			return 'Player name is empty.';
-		if (mb_strlen($team) === 0) {
-			$team = NULL;
-		} else {
-			$team = team2_identify_by_name($team, $game);
-			if (is_null($team))
-				return 'Player team not found.';
-		}
+		$team = team2_identify_by_name($team, $game);
+		if (is_null($team))
+			return 'Player team not found.';
 		return [
 			'name' => $name,
 			'mark' => $mark,

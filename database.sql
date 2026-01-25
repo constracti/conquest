@@ -17,7 +17,7 @@ CREATE TABLE `player` (
 	`id` int(11) NOT NULL,
 	`name` varchar(255) NOT NULL,
 	`mark` varchar(255) NOT NULL,
-	`team` int(11) DEFAULT NULL,
+	`team` int(11) NOT NULL,
 	`game` int(11) NOT NULL
 );
 
@@ -116,7 +116,7 @@ ALTER TABLE `win`
 
 
 ALTER TABLE `player`
-	ADD CONSTRAINT `player_ibfk_1` FOREIGN KEY (`team`) REFERENCES `team` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+	ADD CONSTRAINT `player_ibfk_1` FOREIGN KEY (`team`) REFERENCES `team` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
 	ADD CONSTRAINT `player_ibfk_2` FOREIGN KEY (`game`) REFERENCES `game` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE `polygon`

@@ -48,7 +48,7 @@ import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_
  * @property {number} id
  * @property {string} name
  * @property {string} mark
- * @property {?number} team - TODO make team mandatory
+ * @property {number} team
  */
 
 /**
@@ -643,8 +643,7 @@ function render_station() {
 function render_team() {
 	const player_count_map_by_team = new Map(state.team_list.map(team => [team.id, 0]));
 	state.player_list.forEach(player => {
-		if (player.team !== null)
-			player_count_map_by_team.set(player.team, player_count_map_by_team.get(player.team) + 1);
+		player_count_map_by_team.set(player.team, player_count_map_by_team.get(player.team) + 1);
 	});
 	/**
 	 * @param {?Team} team
@@ -810,17 +809,15 @@ function render_player() {
 					content: player.name,
 				}),
 			);
-			if (player.team !== null) {
-				const team = team_map.get(player.team);
-				element_list.push(n({
-					class: 'badge border m-1',
-					style: {
-						backgroundColor: team.background_color,
-						color: team.text_color,
-					},
-					content: team.name,
-				}));
-			}
+			const team = team_map.get(player.team);
+			element_list.push(n({
+				class: 'badge border m-1',
+				style: {
+					backgroundColor: team.background_color,
+					color: team.text_color,
+				},
+				content: team.name,
+			}));
 		} else {
 			element_list.push(n({
 				class: 'm-1 flex-grow-1',
@@ -913,6 +910,7 @@ function render_player() {
 					name: 'team',
 					option_list: n_option_list(state.team_list, '-'),
 					value: player?.team?.toFixed(),
+					required: true,
 				}),
 				n_form_submit(),
 				n_form_cancel(element_list),

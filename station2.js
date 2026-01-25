@@ -38,7 +38,7 @@ import { n, n_option_list } from './element.js';
  * @property {number} id
  * @property {string} name
  * @property {string} mark
- * @property {?number} team - TODO make team mandatory
+ * @property {number} team
  */
 
 /**
