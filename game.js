@@ -1,4 +1,4 @@
-import { api } from './common.js';
+import { api, team2_badge } from './common.js';
 import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from './element.js';
 
 /**
@@ -34,21 +34,11 @@ import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_
  */
 
 /**
- * @typedef Team
- * @type {object}
- * @property {number} id
- * @property {string} name
- * @property {string} background_color
- * @property {string} text_color
+ * @typedef {import('./common.js').Team2} Team2
  */
 
 /**
- * @typedef Player
- * @type {object}
- * @property {number} id
- * @property {string} name
- * @property {string} mark
- * @property {number} team
+ * @typedef {import('./common.js').Player2} Player2
  */
 
 /**
@@ -57,8 +47,8 @@ import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_
  * @property {Game} game
  * @property {Polygon[]} polygon_list
  * @property {Station[]} station_list
- * @property {Team[]} team_list
- * @property {Player[]} player_list
+ * @property {Team2[]} team_list
+ * @property {Player2[]} player_list
  */
 
 /**
@@ -67,8 +57,8 @@ import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_
  * @property {Game} game
  * @property {Polygon[]} polygon_list
  * @property {Station[]} station_list
- * @property {Team[]} team_list
- * @property {Player[]} player_list
+ * @property {Team2[]} team_list
+ * @property {Player2[]} player_list
  * @property {string} password
  */
 
@@ -646,7 +636,7 @@ function render_team() {
 		player_count_map_by_team.set(player.team, player_count_map_by_team.get(player.team) + 1);
 	});
 	/**
-	 * @param {?Team} team
+	 * @param {?Team2} team
 	 * @returns {HTMLDivElement}
 	 */
 	function row(team) {
@@ -659,14 +649,7 @@ function render_team() {
 			element_list.push(n({
 				class: 'flex-grow-1',
 				content: [
-					n({
-						class: 'badge border m-1',
-						style: {
-							backgroundColor: team.background_color,
-							color: team.text_color,
-						},
-						content: team.name,
-					}),
+					team2_badge(team),
 				],
 			}));
 		} else {
@@ -701,7 +684,7 @@ function render_team() {
 					form_data.append('password', state.password);
 					form_data.append('id', team.id.toFixed());
 					/**
-					 * @type {Team[]}
+					 * @type {Team2[]}
 					 */
 					const result = await api.post('team2_delete', form_data);
 					state.team_list = result;
@@ -728,7 +711,7 @@ function render_team() {
 				form_data.append('game', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				/**
-				 * @type {Team[]|null}
+				 * @type {Team2[]|null}
 				 */
 				const result = await api.post(team !== null ? 'team2_update' : 'team2_insert', form_data);
 				if (result === null) {
@@ -788,7 +771,7 @@ function render_team() {
 function render_player() {
 	const team_map = new Map(state.team_list.map(team => [team.id, team]));
 	/**
-	 * @param {?Player} player
+	 * @param {?Player2} player
 	 * @returns {HTMLDivElement}
 	 */
 	function row(player) {
@@ -810,14 +793,7 @@ function render_player() {
 				}),
 			);
 			const team = team_map.get(player.team);
-			element_list.push(n({
-				class: 'badge border m-1',
-				style: {
-					backgroundColor: team.background_color,
-					color: team.text_color,
-				},
-				content: team.name,
-			}));
+			element_list.push(team2_badge(team));
 		} else {
 			element_list.push(n({
 				class: 'm-1 flex-grow-1',
@@ -850,7 +826,7 @@ function render_player() {
 					form_data.append('password', state.password);
 					form_data.append('id', player.id.toFixed());
 					/**
-					 * @type {Player[]}
+					 * @type {Player2[]}
 					 */
 					const result = await api.post('player2_delete', form_data);
 					state.player_list = result;
@@ -874,7 +850,7 @@ function render_player() {
 				form_data.append('game', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				/**
-				 * @type {Player[]|null}
+				 * @type {Player2[]|null}
 				 */
 				const result = await api.post(player !== null ? 'player2_update' : 'player2_insert', form_data);
 				if (result === null) {
@@ -1243,7 +1219,7 @@ import_form.addEventListener('submit', async event => {
 	form_data.append('game', state.game.id.toFixed());
 	form_data.append('password', state.password);
 	/**
-	 * @type {Player[]|{error: string, line: number}}
+	 * @type {Player2[]|{error: string, line: number}}
 	 */
 	const result = await api.post('player2_import', form_data);
 	if ('error' in result) {

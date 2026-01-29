@@ -1,6 +1,5 @@
 import { API } from './api.js';
 import { n } from './element.js';
-import { lexicon } from './lexicon.js';
 
 /**
  * @typedef Station
@@ -20,12 +19,30 @@ import { lexicon } from './lexicon.js';
  */
 
 /**
+ * @typedef Team2
+ * @type {object}
+ * @property {number} id
+ * @property {string} name
+ * @property {string} background_color
+ * @property {string} text_color
+ */
+
+/**
  * @typedef Player
  * @type {object}
  * @property {string} id
  * @property {string} name
  * @property {number} team
  * @property {boolean} block
+ */
+
+/**
+ * @typedef Player2
+ * @type {object}
+ * @property {number} id
+ * @property {string} name
+ * @property {string} mark
+ * @property {number} team
  */
 
 /**
@@ -75,7 +92,7 @@ function text_color(background_color) {
 
 /**
  * @param {Team} team
- * @returns {HTMLDivElement}
+ * @returns {HTMLDivElement} TODO replace function
  */
 export function team_badge(team) {
 	return n({
@@ -83,6 +100,21 @@ export function team_badge(team) {
 		style: {
 			backgroundColor: team.color,
 			color: text_color(team.color),
+		},
+		content: team.name,
+	});
+}
+
+/**
+ * @param {Team2} team
+ * @returns {HTMLDivElement}
+ */
+export function team2_badge(team) {
+	return n({
+		class: 'badge border m-1',
+		style: {
+			backgroundColor: team.background_color,
+			color: team.text_color,
 		},
 		content: team.name,
 	});
@@ -102,4 +134,21 @@ export function human_duration(seconds) {
 	let hours = Math.floor(minutes / 60);
 	minutes -= hours * 60;
 	return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/**
+ * @param {number} numeral
+ * @returns {string}
+ * @throws {RangeError}
+ */
+export function numeral_ordinal(numeral) {
+	if (numeral < 0)
+		throw new RangeError();
+	const units = numeral % 10;
+	switch (units) {
+		case 1: return `${numeral}st`;
+		case 2: return `${numeral}nd`;
+		case 3: return `${numeral}rd`;
+		default: return `${numeral}th`;
+	}
 }

@@ -299,6 +299,13 @@ function station2_identify_by_polygon(int $polygon): ?int {
 	return stmt_cell($stmt);
 }
 
+function station2_get_capacity(int $id): ?int {
+	global $db;
+	$stmt = $db->prepare('SELECT `capacity` FROM `station2` WHERE `id` = ?');
+	$stmt->bind_param('i', $id);
+	return stmt_cell($stmt);
+}
+
 function station2_insert(string $name, string $code, int $capacity, ?int $polygon, int $game): void {
 	global $db;
 	$stmt = $db->prepare('INSERT INTO `station2` (`name`, `code`, `capacity`, `polygon`, `game`) VALUES (?, ?, ?, ?, ?)');
@@ -397,6 +404,13 @@ function player2_identify_by_mark(string $mark, int $game): ?int {
 	global $db;
 	$stmt = $db->prepare('SELECT `id` FROM `player2` WHERE `mark` = ? AND `game` = ? LIMIT 1');
 	$stmt->bind_param('si', $mark, $game);
+	return stmt_cell($stmt);
+}
+
+function player2_get_team(int $id): ?int {
+	global $db;
+	$stmt = $db->prepare('SELECT `team` FROM `player2` WHERE `id` = ?');
+	$stmt->bind_param('i', $id);
 	return stmt_cell($stmt);
 }
 
@@ -914,6 +928,8 @@ if (is_post('team2_delete')) {
 	json(team2_select_by_game($game));
 }
 
+// TODO limit mark to digits
+
 if (is_post('player2_insert')) {
 	$game = post_int('game');
 	$password = post_string('password');
@@ -1084,7 +1100,32 @@ if (is_post('win_insert')) {
 	$code = post_string('code');
 	if (!station2_matches($station, $code))
 		exit('code');
-	json(NULL); // TODO win insert
+	$player_list = post_string('player');
+	$player_list = explode(',', $player_list);
+	$team = NULL;
+	$player_list = array_map(function(string $player) use ($game, &$team): int {
+		$player = filter_var($player, FILTER_VALIDATE_INT);
+		if ($player === FALSE)
+			exit('player');
+		if (!player2_belongs_to_game($player, $game))
+			exit('player');
+		$t = player2_get_team($player);
+		if (is_null($team))
+			$team = $t;
+		elseif ($team !== $t)
+			exit('player');
+		return $player;
+	}, $player_list);
+	if (count(array_unique($player_list, SORT_NUMERIC)) !== count($player_list))
+		exit('player');
+	if (count($player_list) !== station2_get_capacity($station))
+		exit('player');
+	$type = post_string('type');
+	if (!in_array($type, ['simple', 'neutralization', 'conquest'], TRUE))
+		exit('type');
+	var_dump($station, $team, $player_list, $type);
+	// TODO check if type valid
+	exit; // TODO win insert
 }
 
 if (is_post('win_delete')) {
