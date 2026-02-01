@@ -1,9 +1,3 @@
-.keyboard-number,
-#keyboard-delete,
-#keyboard-submit {
+.keyboard-number {
 	width: 3em;
-}
-
-#keyboard-screen {
-	width: calc(3 * 3em + 4 * .5rem);
 }

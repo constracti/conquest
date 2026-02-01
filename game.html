@@ -19,12 +19,12 @@
 			<div class="m-2">
 				<label class="form-label" for="login-name">Name</label>
 				<span class="text-danger">*</span>
-				<input class="form-control" id="login-name" name="name" required="required" pattern="[\-a-z0-9]{1,50}">
+				<input class="form-control" id="login-name" name="name" required pattern="[\-a-z0-9]{1,50}">
 			</div>
 			<div class="m-2">
 				<label class="form-label" for="login-password">Password</label>
 				<span class="text-danger">*</span>
-				<input class="form-control" id="login-password" name="password" type="password" required="required">
+				<input class="form-control" id="login-password" name="password" type="password" required>
 			</div>
 			<div class="d-flex flex-row justify-content-between align-items-center">
 				<button class="m-2 btn btn-primary">Submit</button>
@@ -38,7 +38,7 @@
 					<div class="m-2">
 						<label class="form-label" for="register-name">Name</label>
 						<span class="text-danger">*</span>
-						<input class="form-control" id="register-name" name="name" required="required" pattern="[\-a-z0-9]{1,50}">
+						<input class="form-control" id="register-name" name="name" required pattern="[\-a-z0-9]{1,50}">
 						<div class="form-text">
 							This cannot change in the future.
 							Only small latin letters, arithmetic digits and dashes ("-") are accepted.
@@ -56,7 +56,7 @@
 					<div class="m-2">
 						<label class="form-label" for="register-password">Password</label>
 						<span class="text-danger">*</span>
-						<input class="form-control" id="register-password" name="password" type="password" required="required">
+						<input class="form-control" id="register-password" name="password" type="password" required>
 					</div>
 				</div>
 				<div class="col-12 col-sm-6 px-0">
@@ -70,14 +70,14 @@
 					<div class="m-2">
 						<label class="form-label" for="register-start">Game start</label>
 						<span class="text-danger">*</span>
-						<input class="form-control" id="register-start" name="game_start" type="datetime-local" required="required">
+						<input class="form-control" id="register-start" name="game_start" type="datetime-local" required>
 					</div>
 				</div>
 				<div class="col-12 col-sm-6 px-0">
 					<div class="m-2">
 						<label class="form-label" for="register-stop">Game stop</label>
 						<span class="text-danger">*</span>
-						<input class="form-control" id="register-stop" name="game_stop" type="datetime-local" required="required">
+						<input class="form-control" id="register-stop" name="game_stop" type="datetime-local" required>
 					</div>
 				</div>
 			</div>
@@ -102,31 +102,31 @@
 					<div class="col-12 col-sm-6 px-0">
 						<div class="m-2">
 							<label class="form-label" for="game-start-input">Game start</label>
-							<input class="form-control" id="game-start-input" name="game_start" type="datetime-local" required="required">
+							<input class="form-control" id="game-start-input" name="game_start" type="datetime-local" required>
 						</div>
 					</div>
 					<div class="col-12 col-sm-6 px-0">
 						<div class="m-2">
 							<label class="form-label" for="game-stop-input">Game stop</label>
-							<input class="form-control" id="game-stop-input" name="game_stop" type="datetime-local" required="required">
+							<input class="form-control" id="game-stop-input" name="game_stop" type="datetime-local" required>
 						</div>
 					</div>
 					<div class="col-12 col-sm-6 col-lg-3 px-0">
 						<div class="m-2">
 							<label class="form-label" for="reward-success-input">Success points</label>
-							<input class="form-control" id="reward-success-input" name="reward_success" type="number" min="0" required="required">
+							<input class="form-control" id="reward-success-input" name="reward_success" type="number" min="0" required>
 						</div>
 					</div>
 					<div class="col-12 col-sm-6 col-lg-3 px-0">
 						<div class="m-2">
 							<label class="form-label" for="reward-conquest-input">Conquest points per minute</label>
-							<input class="form-control" id="reward-conquest-input" name="reward_conquest" type="number" min="0" required="required">
+							<input class="form-control" id="reward-conquest-input" name="reward_conquest" type="number" min="0" required>
 						</div>
 					</div>
 					<div class="col-12 col-lg-6 px-0">
 						<div class="m-2">
 							<label class="form-label" for="reward-rate-input">Point value increase rate per hour</label>
-							<input class="form-control" id="reward-rate-input" name="reward_rate" type="number" min="0" step="any" required="required">
+							<input class="form-control" id="reward-rate-input" name="reward_rate" type="number" min="0" step="any" required>
 							<div class="form-text">Initial point value: 1.00 - Final point value: <span id="reward-rate-preview"></span></div>
 						</div>
 					</div>
@@ -171,7 +171,7 @@
 					</div>
 					<div class="modal-body p-2">
 						<div class="m-2">
-							<textarea class="form-control" id="import-textarea" name="text" required="required" rows="10"></textarea>
+							<textarea class="form-control" id="import-textarea" name="text" required rows="10"></textarea>
 							<div class="form-text">
 								Each line consists of the player mark, name and team, divided by a tab character.
 								Empty lines are ignored.

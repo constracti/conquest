@@ -1,4 +1,4 @@
-import { api, numeral_ordinal, team2_badge } from './common.js';
+import { api, team2_badge } from './common.js';
 import { n, n_option_list } from './element.js';
 
 /**
@@ -76,9 +76,7 @@ Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
  * @property {string} code
  * @property {Map<number, Team2>} team_map
  * @property {Map<string, Player2>} player_map
- * @property {Player2[]} winner_list
- * @property {string} query
- * @property {?Player2} winner
+ * @property {Player2[]} participant_list
  */
 
 /**
@@ -92,9 +90,7 @@ function state_create(form_data, result) {
 		code: form_data.get('code'),
 		team_map: new Map(result.team_list.map(team => [team.id, team])),
 		player_map: new Map(result.player_list.map(player => [player.mark, player])),
-		winner_list: [],
-		query: '',
-		winner: null,
+		participant_list: [],
 	};
 }
 
@@ -104,6 +100,7 @@ function state_create(form_data, result) {
 let state = null;
 
 function render() {
+	// TODO responsive
 	if (state === null) {
 		login_form.classList.remove('d-none');
 		main_div.classList.add('d-none');
@@ -112,60 +109,16 @@ function render() {
 	login_form.classList.add('d-none');
 	main_div.classList.remove('d-none');
 	name_heading.innerHTML = state.station.name;
-	// TODO different workflow for singular capacity
-	// alert
-	alert_div.innerHTML = '';
-	if (state.winner_list.length === state.station.capacity) {
-		alert_div.append(n({
-			class: 'm-1',
-			content: 'Select type of success.',
-		}));
-	} else if (state.winner !== null) {
-		alert_div.append(
-			n({
-				class: 'm-1',
-				content: [
-					n({
-						tag: 'code',
-						content: state.winner.mark,
-					}),
-				],
-			}),
-			n({
-				class: 'm-1 flex-grow-1',
-				content: state.winner.name,
-			}),
-			team2_badge(state.team_map.get(state.winner.team)),
-		);
-	} else if (state.query === '') {
-		alert_div.append(n({
-			class: 'm-1',
-			content: state.station.capacity > 1 ?
-				`Fill in the mark of the ${numeral_ordinal(state.winner_list.length + 1)} player.` :
-				'Fill in the mark of the player.',
-		}));
-	} else {
-		alert_div.append(n({
-			class: 'm-1',
-			content: `Player with mark <code>${state.query}</code> not found.`,
-		}));
-	}
-	// keyboard
-	if (state.winner_list.length === state.station.capacity)
-		keyboard_div.classList.add('d-none');
+	if (state.participant_list.length === state.station.capacity)
+		player_form.classList.add('d-none');
 	else
-		keyboard_div.classList.remove('d-none');
-	keyboard_screen.value = state.query;
-	keyboard_delete.disabled = state.query === '';
-	keyboard_submit.disabled = state.winner === null ||
-		state.winner_list.some(player => player.id === state.winner.id || player.team !== state.winner.team);
-	// player
-	if (state.winner_list.length !== 0)
+		player_form.classList.remove('d-none');
+	if (state.participant_list.length !== 0)
 		player_list.classList.remove('d-none');
 	else
 		player_list.classList.add('d-none');
 	player_list.innerHTML = '';
-	player_list.append(...state.winner_list.map((player, index) => n({
+	player_list.append(...state.participant_list.map((player, index) => n({
 		class: 'list-group-item d-flex flex-row align-items-center p-1',
 		content: [
 			n({
@@ -187,16 +140,16 @@ function render() {
 				class: 'm-1 btn btn-danger btn-sm',
 				content: 'Remove',
 				click: () => {
-					state.winner_list.splice(index, 1);
+					state.participant_list.splice(index, 1);
 					render();
 				},
 			}),
 		],
 	})));
-	// success
-	win_array.forEach(button => {
-		button.disabled = state.winner_list.length !== state.station.capacity; // TODO per button value
-	});
+	if (state.participant_list.length === state.station.capacity)
+		attempt_form.classList.remove('d-none');
+	else
+		attempt_form.classList.add('d-none');
 }
 
 /**
@@ -258,52 +211,27 @@ logout_button.addEventListener('click', () => {
 });
 
 /**
- * @type {HTMLDivElement}
+ * @type {HTMLFormElement}
  */
-const alert_div = document.getElementById('alert-div');
+const player_form = document.getElementById('player-form');
 
-/**
- * @type {HTMLDivElement}
- */
-const keyboard_div = document.getElementById('keyboard-div');
-
-/**
- * @type {HTMLInputElement}
- */
-const keyboard_screen = document.getElementById('keyboard-screen');
-
-Array.from(document.getElementsByClassName('keyboard-number')).forEach(button => {
-	button.addEventListener('click', event => {
-		/**
-		 * @type {HTMLButtonElement}
-		 */
-		const button = event.currentTarget;
-		state.query += button.innerHTML;
-		state.winner = state.player_map.get(state.query) ?? null;
-		render();
-	});
-});
-
-/**
- * @type {HTMLButtonElement}
- */
-const keyboard_delete = document.getElementById('keyboard-delete')
-
-keyboard_delete.addEventListener('click', () => {
-	state.query = '';
-	state.winner = null;
-	render();
-});
-
-/**
- * @type {HTMLButtonElement}
- */
-const keyboard_submit = document.getElementById('keyboard-submit')
-
-keyboard_submit.addEventListener('click', () => {
-	state.winner_list.push(state.winner);
-	state.query = '';
-	state.winner = null;
+player_form.addEventListener('submit', event => {
+	event.preventDefault();
+	const form_data = new FormData(event.currentTarget);
+	const mark = form_data.get('mark');
+	const player = state.player_map.get(mark) ?? null;
+	if (player === null) {
+		alert('Player not found.');
+		return;
+	} else if (state.participant_list.some(p => p.id === player.id)) {
+		alert('Player is already added.');
+		return;
+	} else if (state.participant_list.some(p => p.team !== player.team)) {
+		alert('Player belongs to a different team.');
+		return;
+	}
+	state.participant_list.push(player);
+	player_form.reset();
 	render();
 });
 
@@ -315,36 +243,26 @@ const player_list = document.getElementById('player-list');
 /**
  * @type {HTMLFormElement}
  */
-const win_form = document.getElementById('win-form');
+const attempt_form = document.getElementById('attempt-form');
 
-win_form.addEventListener('submit', async event => {
+attempt_form.addEventListener('submit', async event => {
 	event.preventDefault();
 	if (!spinner_div.classList.contains('d-none'))
 		return;
 	spinner_div.classList.remove('d-none');
-	/**
-	 * @type {HTMLButtonElement}
-	 */
-	const button = event.submitter;
 	const form_data = new FormData(event.currentTarget);
 	form_data.append('game', page.game.name);
 	form_data.append('station', state.station.id.toFixed());
 	form_data.append('code', state.code);
-	form_data.append('type', button.value);
-	form_data.append('player', state.winner_list.map(player => player.id.toFixed()).join(','));
+	form_data.append('participant_list', state.participant_list.map(player => player.id.toFixed()).join(','));
 	/**
 	 * @type {Login}
 	 */
-	const result = await api.post('win_insert', form_data);
+	const result = await api.post('attempt_insert', form_data);
 	state = state_create(form_data, result);
 	spinner_div.classList.add('d-none');
 	render();
 });
-
-/**
- * @type {HTMLButtonElement[]}
- */
-const win_array = Array.from(document.getElementsByClassName('win-button'));
 
 await (async () => {
 	const game = localStorage.getItem('game');

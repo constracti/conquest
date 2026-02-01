@@ -1,5 +1,5 @@
 import { api, team2_badge } from './common.js';
-import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from './element.js';
+import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from './element.js';
 
 /**
  * @typedef Game
@@ -29,8 +29,11 @@ import { n, n_option_list, n_form_hidden, n_form_control, n_form_submit, n_form_
  * @property {number} id
  * @property {string} name
  * @property {string} code
- * @property {number} capacity
  * @property {?number} polygon
+ * @property {number} capacity
+ * @property {boolean} score_sign
+ * @property {?number} score_base
+ * @property {?number} score_high
  */
 
 /**
@@ -511,10 +514,6 @@ function render_station() {
 				content: station.code,
 			}));
 			element_list.push(n({
-				class: 'm-1',
-				content: `Capacity: ${station.capacity.toFixed()}`,
-			}));
-			element_list.push(n({
 				class: 'm-1 badge text-bg-info',
 				content: station.polygon !== null ? polygon_map.get(station.polygon).name : '-',
 			}));
@@ -560,7 +559,7 @@ function render_station() {
 		const prefix = `station-${(station?.id ?? 0).toFixed()}-`;
 		element_list.push(n({
 			tag: 'form',
-			class: 'flex-grow-1 d-flex flex-row d-none',
+			class: 'flex-grow-1 d-flex flex-row flex-wrap d-none',
 			submit: async event => {
 				event.preventDefault();
 				if (!spinner_div.classList.contains('d-none'))
@@ -578,41 +577,77 @@ function render_station() {
 				render();
 			},
 			content: [
-				n_form_hidden('id', station?.id?.toFixed()),
-				n_form_control({
-					id: prefix + 'name',
-					label: 'Name',
-					name: 'name',
-					value: station?.name,
-					required: true,
+				n({
+					class: 'flex-grow-1 d-flex flex-row',
+					content: [
+						n_form_hidden('id', station?.id?.toFixed()),
+						n_form_control({
+							id: prefix + 'name',
+							label: 'Name',
+							name: 'name',
+							value: station?.name,
+							required: true,
+						}),
+						n_form_control({
+							id: prefix + 'code',
+							label: 'Code',
+							name: 'code',
+							value: station?.code,
+							required: true,
+							text: 'A password used to submit successes.',
+						}),
+						n_form_control({
+							type: 'select',
+							id: prefix + 'polygon',
+							label: 'Polygon',
+							name: 'polygon',
+							option_list: state.polygon_list.filter(polygon => !polygon_set.has(polygon.id) || polygon.id === station?.polygon),
+							value: station?.polygon?.toFixed(),
+						}),
+					],
 				}),
-				n_form_control({
-					id: prefix + 'code',
-					label: 'Code',
-					name: 'code',
-					value: station?.code,
-					required: true,
-					text: 'A password used to submit successes.',
+				n({
+					class: 'flex-grow-1 d-flex flex-row',
+					content: [
+						n_form_control({
+							type: 'number',
+							id: prefix + 'capacity',
+							label: 'Capacity',
+							name: 'capacity',
+							min: '1',
+							value: station?.capacity?.toFixed() ?? '1',
+							required: true,
+						}),
+						n_form_control({
+							type: 'select',
+							id: prefix + 'score-sign',
+							label: 'Score sign',
+							name: 'score_sign',
+							option_list: [
+								{id: 0, name: 'Higher score wins'},
+								{id: 1, name: 'Lower score wins'},
+							],
+							value: station?.score_sign,
+							required: true,
+						}),
+						n_form_control({
+							type: 'number',
+							id: prefix + 'score-base',
+							label: 'Score base',
+							name: 'score_base',
+							value: station?.score_base?.toFixed(),
+						}),
+						n_form_control({
+							type: 'number',
+							id: prefix + 'score-high',
+							label: 'Score high',
+							name: 'score_high',
+							value: station?.score_high?.toFixed(),
+						}),
+						n_form_submit(),
+						n_form_cancel(element_list),
+					],
 				}),
-				n_form_control({
-					type: 'number',
-					id: prefix + 'capacity',
-					label: 'Capacity',
-					name: 'capacity',
-					min: '1',
-					value: station?.capacity?.toFixed() ?? '1',
-					required: true,
-				}),
-				n_form_control({
-					type: 'select',
-					id: prefix + 'polygon',
-					label: 'Polygon',
-					name: 'polygon',
-					option_list: n_option_list(state.polygon_list.filter(polygon => !polygon_set.has(polygon.id) || polygon.id === station?.polygon), '-'),
-					value: station?.polygon?.toFixed(),
-				}),
-				n_form_submit(),
-				n_form_cancel(element_list),
 			],
 		}));
 		// return
@@ -884,7 +919,7 @@ function render_player() {
 					id: prefix + 'team',
 					label: 'Team',
 					name: 'team',
-					option_list: n_option_list(state.team_list, '-'),
+					option_list: state.team_list,
 					value: player?.team?.toFixed(),
 					required: true,
 				}),
