@@ -135,20 +135,3 @@ export function human_duration(seconds) {
 	minutes -= hours * 60;
 	return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
-
-/**
- * @param {number} numeral
- * @returns {string}
- * @throws {RangeError}
- */
-export function numeral_ordinal(numeral) {
-	if (numeral < 0)
-		throw new RangeError();
-	const units = numeral % 10;
-	switch (units) {
-		case 1: return `${numeral}st`;
-		case 2: return `${numeral}nd`;
-		case 3: return `${numeral}rd`;
-		default: return `${numeral}th`;
-	}
-}
