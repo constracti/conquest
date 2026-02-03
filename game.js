@@ -1,4 +1,4 @@
-import { api, team2_badge } from './common.js';
+import { api, score_sign_list, team2_badge } from './common.js';
 import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from './element.js';
 
 /**
@@ -7,8 +7,10 @@ import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from '
  * @property {number} id
  * @property {string} name
  * @property {?string} title
- * @property {string} game_start
- * @property {string} game_stop
+ * @property {number} game_start
+ * @property {string} game_start_js
+ * @property {number} game_stop
+ * @property {string} game_stop_js
  * @property {number} reward_success
  * @property {number} reward_conquest
  * @property {number} reward_rate
@@ -91,9 +93,9 @@ function render() {
 
 function render_game() {
 	title_input.value = state.game.title ?? '';
-	game_start_input.value = state.game.game_start;
+	game_start_input.value = state.game.game_start_js;
 	game_start_input.dispatchEvent(new Event('change'));
-	game_stop_input.value = state.game.game_stop;
+	game_stop_input.value = state.game.game_stop_js;
 	game_stop_input.dispatchEvent(new Event('change'));
 	reward_success_input.value = state.game.reward_success.toFixed();
 	reward_conquest_input.value = state.game.reward_conquest.toFixed();
@@ -623,10 +625,7 @@ function render_station() {
 							id: prefix + 'score-sign',
 							label: 'Score sign',
 							name: 'score_sign',
-							option_list: [
-								{id: 0, name: 'Higher score wins'},
-								{id: 1, name: 'Lower score wins'},
-							],
+							option_list: score_sign_list,
 							value: station?.score_sign,
 							required: true,
 						}),
@@ -818,9 +817,8 @@ function render_player() {
 		if (player !== null) {
 			element_list.push(
 				n({
-					tag: 'code',
 					class: 'm-1',
-					content: player.mark,
+					content: `<code>${player.mark}</code>`,
 				}),
 				n({
 					class: 'm-1 flex-grow-1',

@@ -81,7 +81,7 @@ set_title(app_name); // TODO is this necessary?
 /**
  * css expression resulting in a contrasting black or white color,
  * that depends on background color lightness (l)
- * and assuming lightness is not near 50
+ * and assuming lightness is not near mean
  * @param {string} background_color
  * @returns {string}
  */
@@ -89,6 +89,11 @@ function text_color(background_color) {
 	const mean = 60;
 	return `lab(from ${background_color} calc((${mean} - l) * 100 + 100 - ${mean}) 0 0)`;
 }
+
+export const score_sign_list = [
+	{id: 0, name: 'Higher score wins'},
+	{id: 1, name: 'Lower score wins'},
+];
 
 /**
  * @param {Team} team
@@ -123,15 +128,81 @@ export function team2_badge(team) {
 /**
  * @param {number} seconds
  * @returns {string}
- * @throws {RangeError}
  */
 export function human_duration(seconds) {
+	const sign = seconds < 0 ? '-' : '';
 	if (seconds < 0)
-		throw new RangeError();
+		seconds = -seconds;
 	seconds = Math.floor(seconds);
 	let minutes = Math.floor(seconds / 60);
 	seconds -= minutes * 60;
 	let hours = Math.floor(minutes / 60);
 	minutes -= hours * 60;
 	return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+/**
+ * @param {?number} score 
+ * @returns {number} 
+ */
+function negate(score) {
+	if (score === null)
+		return null;
+	return -score;
+}
+
+/**
+ * @param {?number} record
+ * @param {number} score
+ * @returns {?number}
+ */
+function maximum(record, score) {
+	if (record === null)
+		return score;
+	return Math.max(record, score);
+}
+
+/**
+ * @param {boolean} sign
+ * @param {?number} base
+ * @param {?number} high
+ * @param {number} score
+ * @param {number} team
+ * @param {{conqueror: ?number, record: ?number}} memory
+ */
+export function attempt_type(sign, base, high, score, team, memory) {
+	if (sign) {
+		memory.record = negate(memory.record);
+		const type = attempt_type(!sign, negate(base), negate(high), negate(score), team, memory);
+		memory.record = negate(memory.record);
+		return type;
+	}
+	if (base !== null && score < base) {
+		memory.record = maximum(memory.record, score);
+		return 'Failure';
+	}
+	if (team === memory.conqueror) {
+		memory.record = maximum(memory.record, score);
+		return 'Success';
+	}
+	if (high !== null && score >= high) {
+		memory.conqueror = team;
+		memory.record = maximum(memory.record, score);
+		return 'Success and Conquest';
+	}
+	if (memory.record === null) {
+		memory.conqueror = team;
+		memory.record = score;
+		return 'Success and Conquest';
+	}
+	if (score > memory.record) {
+		memory.conqueror = team;
+		memory.record = score;
+		return 'Success and Conquest';
+	}
+	if (score === memory.record) {
+		memory.conqueror = null;
+		return 'Success and Neutralization';
+	}
+	return 'Success';
 }

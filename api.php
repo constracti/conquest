@@ -154,8 +154,8 @@ function game_select_by_id(int $id): ?array {
 	$item = stmt_item($stmt);
 	if (is_null($item))
 		return NULL;
-	$item['game_start'] = DT::from_int($item['game_start'])->to_js();
-	$item['game_stop'] = DT::from_int($item['game_stop'])->to_js();
+	$item['game_start_js'] = DT::from_int($item['game_start'])->to_js();
+	$item['game_stop_js'] = DT::from_int($item['game_stop'])->to_js();
 	return $item;
 }
 
@@ -465,6 +465,13 @@ function player2_truncate(int $game): void {
 
 // attempt
 
+function attempt_select_by_station(int $station): array {
+	global $db;
+	$stmt = $db->prepare('SELECT `id`, `station`, `team`, `score`, `time` FROM `attempt` WHERE `station` = ? ORDER BY `time` ASC, `id` ASC');
+	$stmt->bind_param('i', $station);
+	return stmt_list($stmt);
+}
+
 function attempt_belongs_to_game(int $id, int $game): bool {
 	global $db;
 	$stmt = $db->prepare('SELECT `id` FROM `attempt` WHERE `id` = ? AND `game` = ?');
@@ -500,8 +507,6 @@ function participant_insert(int $attempt, int $player, int $game): void {
 	$stmt->execute();
 	$stmt->close();
 }
-
-// TODO win and winner database functions
 
 // place
 
@@ -989,8 +994,6 @@ if (is_post('team2_delete')) {
 	json(team2_select_by_game($game));
 }
 
-// TODO limit mark to digits
-
 if (is_post('player2_insert')) {
 	$game = post_int('game');
 	$password = post_string('password');
@@ -1125,6 +1128,9 @@ if (is_post('station2_list')) {
 			'id' => $station['id'],
 			'name' => $station['name'],
 			'capacity' => $station['capacity'],
+			'score_sign' => $station['score_sign'],
+			'score_base' => $station['score_base'],
+			'score_high' => $station['score_high'],
 		];
 	}, $station_list);
 	json([
@@ -1147,6 +1153,7 @@ if (is_post('station2_login')) {
 	json([
 		'team_list' => team2_select_by_game($game),
 		'player_list' => player2_select_by_game($game),
+		'attempt_list' => attempt_select_by_station($station),
 	]);
 }
 
@@ -1189,6 +1196,7 @@ if (is_post('attempt_insert')) {
 	json([
 		'team_list' => team2_select_by_game($game),
 		'player_list' => player2_select_by_game($game),
+		'attempt_list' => attempt_select_by_station($station),
 	]);
 }
 
@@ -1210,6 +1218,7 @@ if (is_post('attempt_delete')) {
 	json([
 		'team_list' => team2_select_by_game($game),
 		'player_list' => player2_select_by_game($game),
+		'attempt_list' => attempt_select_by_station($station),
 	]);
 }
 

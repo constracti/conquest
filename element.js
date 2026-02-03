@@ -109,6 +109,25 @@ export function n_option_list(option_list, option_null) {
 }
 
 /**
+ * @param {{id: number, name: string}[]} option_list
+ * @returns {HTMLOptionElement[]}
+ */
+export function n_option_list2(option_list) {
+	const select_option = document.createElement('option');
+	select_option.value = '';
+	select_option.innerHTML = '-';
+	return [
+		select_option,
+		...option_list.map(option => {
+			const select_option = document.createElement('option');
+			select_option.value = option.id.toFixed();
+			select_option.innerHTML = option.name;
+			return select_option;
+		}),
+	];
+}
+
+/**
  * @param {object} options
  * @param {?string} options.type - default: text
  * @param {string} options.id
@@ -168,20 +187,8 @@ export function n_form_control(options) {
 	} else {
 		const select = document.createElement('select');
 		select.name = options.name;
-		if (options.option_list !== null) {
-			const select_option = document.createElement('option');
-			select_option.value = '';
-			select_option.innerHTML = '-';
-			select.append(
-				select_option,
-				...options.option_list.map(option => {
-					const select_option = document.createElement('option');
-					select_option.value = option.id.toFixed();
-					select_option.innerHTML = option.name;
-					return select_option;
-				}),
-			);
-		}
+		if (options.option_list !== null)
+			select.append(...n_option_list2(options.option_list));
 		if (options.value !== null)
 			select.value = options.value;
 		select.required = options.required;
