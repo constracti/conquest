@@ -47,7 +47,7 @@ import { n, n_option_list2 } from './element.js';
  */
 
 /**
- * @type {{game: Game, station_map: Map<number, Station>}}
+ * @type {{game: Game, time_offset: number, station_map: Map<number, Station>}}
  */
 const page = await (async () => {
 	const search_params = new URLSearchParams(location.search);
@@ -57,7 +57,7 @@ const page = await (async () => {
 	const form_data = new FormData();
 	form_data.append('game', game);
 	/**
-	 * @type {{game: Game, station_list: Station[]}}
+	 * @type {{game: Game, time: number, station_list: Station[]}}
 	 */
 	const result = await api.post('station2_list', form_data);
 	/**
@@ -67,6 +67,7 @@ const page = await (async () => {
 	station_select.append(...n_option_list2(result.station_list));
 	return {
 		game: result.game,
+		time_offset: result.time - Date.now() / 1000,
 		station_map: new Map(result.station_list.map(station => [station.id, station])),
 	};
 })();
@@ -276,6 +277,31 @@ function render() {
 const spinner_div = document.getElementById('spinner-div');
 
 /**
+ * @type {HTMLDivElement}
+ */
+const timer_div = document.getElementById('timer-div');
+
+/**
+ * @type {?number}
+ */
+let timer = null;
+function timer_tick() {
+	const time = page.time_offset + Date.now() / 1000;
+	if (time < page.game.game_start) {
+		timer_div.innerHTML = `Game start: ${human_duration(page.game.game_start - time)}`;
+	} else if (time < page.game.game_stop) {
+		timer_div.innerHTML = `Game stop: ${human_duration(page.game.game_stop - time)}`;
+	} else {
+		timer_div.innerHTML = 'Game over.';
+		if (timer !== null)
+			clearInterval(timer);
+	}
+}
+timer = setInterval(timer_tick, 1000);
+timer_tick();
+timer_div.classList.remove('d-none');
+
+/**
  * @type {HTMLFormElement}
  */
 const login_form = document.getElementById('login-form');
@@ -388,6 +414,17 @@ attempt_form.addEventListener('submit', async event => {
 	if (!spinner_div.classList.contains('d-none'))
 		return;
 	spinner_div.classList.remove('d-none');
+	const time = page.time_offset + Date.now() / 1000;
+	if (time < page.game.game_start) {
+		alert('The game has not started.');
+		spinner_div.classList.add('d-none');
+		return;
+	}
+	if (time >= page.game.game_stop) {
+		alert('The game has ended.');
+		spinner_div.classList.add('d-none');
+		return;
+	}
 	const form_data = new FormData(attempt_form);
 	form_data.append('game', page.game.name);
 	form_data.append('station', state.station.id.toFixed());
