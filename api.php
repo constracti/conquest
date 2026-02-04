@@ -176,6 +176,26 @@ function game_matches(int $id, string $password): bool {
 	return password_verify($password, $hash);
 }
 
+function game_get_start(int $id): ?DT {
+	global $db;
+	$stmt = $db->prepare('SELECT `game_start` FROM `game` WHERE `id` = ?');
+	$stmt->bind_param('i', $id);
+	$cell = stmt_cell($stmt);
+	if (is_null($cell))
+		return NULL;
+	return DT::from_int($cell);
+}
+
+function game_get_stop(int $id): ?DT {
+	global $db;
+	$stmt = $db->prepare('SELECT `game_stop` FROM `game` WHERE `id` = ?');
+	$stmt->bind_param('i', $id);
+	$cell = stmt_cell($stmt);
+	if (is_null($cell))
+		return NULL;
+	return DT::from_int($cell);
+}
+
 function game_insert(
 	string $name, ?string $title, string $password,
 	DT $game_start, DT $game_stop,
@@ -1135,6 +1155,7 @@ if (is_post('station2_list')) {
 	}, $station_list);
 	json([
 		'game' => game_select_by_id($game),
+		'time' => time(),
 		'station_list' => $station_list,
 	]);
 }
@@ -1189,7 +1210,13 @@ if (is_post('attempt_insert')) {
 		exit('participant_list');
 	if (count($participant_list) !== station2_get_capacity($station))
 		exit('participant_list');
-	$time = DT::from_now(); // TODO check range
+	$time = DT::from_now();
+	$game_start = game_get_start($game);
+	if ($time->to_int() < $game_start->to_int())
+		exit('game');
+	$game_stop = game_get_stop($game);
+	if ($time->to_int() >= $game_stop->to_int())
+		exit('game');
 	$attempt = attempt_insert($station, $team, $score, $time, $game);
 	foreach ($participant_list as $participant)
 		participant_insert($attempt, $participant, $game);
