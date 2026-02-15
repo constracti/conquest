@@ -47,47 +47,34 @@ import { n, n_option_list2 } from './element.js';
  */
 
 /**
- * @type {{game: Game, time_offset: number, station_map: Map<number, Station>}}
+ * @typedef HomeResult
+ * @type {object}
+ * @property {Game} game
+ * @property {number} time
+ * @property {Station[]} station_list
  */
-const page = await (async () => {
-	const search_params = new URLSearchParams(location.search);
-	const game = search_params.get('game');
-	if (game === null)
-		throw new Error('game');
-	const form_data = new FormData();
-	form_data.append('game', game);
-	/**
-	 * @type {{game: Game, time: number, station_list: Station[]}}
-	 */
-	const result = await api.post('station2_list', form_data);
-	/**
-	 * @type {HTMLSelectElement}
-	 */
-	const station_select = document.getElementById('station-select');
-	station_select.append(...n_option_list2(result.station_list));
-	return {
-		game: result.game,
-		time_offset: result.time - Date.now() / 1000,
-		station_map: new Map(result.station_list.map(station => [station.id, station])),
-	};
-})();
-
-const title = page.game.title ?? 'The Station War';
-document.title = title;
-Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
-	h1.innerHTML = title;
-});
 
 /**
- * @typedef Login
+ * @typedef HomeState
  * @type {object}
+ * @property {Game} game
+ * @property {number} time_offset
+ * @property {Map<number, Station>} station_map
+ */
+
+/**
+ * @typedef LoginResult
+ * @type {object}
+ * @property {Game} game
+ * @property {number} time
+ * @property {Station[]} station_list
  * @property {Team2[]} team_list
  * @property {Player2[]} player_list
  * @property {Attempt[]} attempt_list
  */
 
 /**
- * @typedef State
+ * @typedef LoginState
  * @type {object}
  * @property {Station} station
  * @property {string} code
@@ -98,13 +85,35 @@ Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
  */
 
 /**
- * @param {FormData} form_data
- * @param {Login} result
- * @returns {State}
+ * @type {?HomeState}
  */
-function state_create(form_data, result) {
-	return {
-		station: page.station_map.get(parseInt(form_data.get('station'))),
+let home_state = null;
+
+/**
+ * @param {HomeResult} result
+ */
+function home_result_to_state(result) {
+	home_state = {
+		game: result.game,
+		time_offset: result.time - Date.now() / 1000,
+		station_map: new Map(result.station_list.map(station => [station.id, station])),
+		login_state: null,
+	};
+}
+
+/**
+ * @type {?LoginState}
+ */
+let login_state = null;
+
+/**
+ * @param {FormData} form_data
+ * @param {LoginResult} result
+ */
+function login_result_to_state(form_data, result) {
+	home_result_to_state(result);
+	login_state = {
+		station: home_state.station_map.get(parseInt(form_data.get('station'))),
 		code: form_data.get('code'),
 		team_map: new Map(result.team_list.map(team => [team.id, team])),
 		player_map: new Map(result.player_list.map(player => [player.mark, player])),
@@ -113,34 +122,81 @@ function state_create(form_data, result) {
 	};
 }
 
+await (async () => {
+	const search_params = new URLSearchParams(location.search);
+	const game = search_params.get('game');
+	if (game === null)
+		return;
+	const form_data = new FormData();
+	form_data.append('game', game);
+	/**
+	 * @type {?HomeResult}
+	 */
+	const result = await api.post('station2_list', form_data);
+	if (result === null)
+		return;
+	home_result_to_state(result);
+})();
+
+if (home_state === null) {
+	const error = new Error('Invalid game parameter in url.');
+	console.error(error.message);
+	alert(error.message);
+	throw error;
+}
+
+((title) => {
+	document.title = title;
+	Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
+		h1.innerHTML = title;
+	});
+})(home_state.game.title ?? 'The Station War');
+
 /**
- * @type {?State}
+ * @type {HTMLDivElement}
  */
-let state = null;
+const timer_div = document.getElementById('timer-div');
+
+function timer_tick() {
+	const time = home_state.time_offset + Date.now() / 1000;
+	const game = home_state.game;
+	if (time < game.game_start)
+		timer_div.innerHTML = `Game start: ${human_duration(game.game_start - time)}`;
+	else if (time < game.game_stop)
+		timer_div.innerHTML = `Game stop: ${human_duration(game.game_stop - time)}`;
+	else
+		timer_div.innerHTML = 'Game over.';
+}
+setInterval(timer_tick, 1000);
+timer_tick();
+timer_div.classList.remove('d-none');
 
 function render() {
-	if (state === null) {
+	if (login_state === null) {
+		station_select.innerHTML = '';
+		station_select.append(...n_option_list2(Array.from(home_state.station_map.values())));
 		login_form.classList.remove('d-none');
 		main_div.classList.add('d-none');
 		return;
 	}
 	login_form.classList.add('d-none');
 	main_div.classList.remove('d-none');
-	name_heading.innerHTML = state.station.name;
-	capacity_badge.innerHTML = `Capacity: ${state.station.capacity}`;
-	score_sign_badge.innerHTML = score_sign_list[state.station.score_sign].name;
-	score_base_badge.innerHTML = state.station.score_base !== null ? `Score base: ${state.station.score_base}` : '';
-	score_high_badge.innerHTML = state.station.score_high !== null ? `Score high: ${state.station.score_high}` : '';
-	if (state.participant_list.length === state.station.capacity)
+	const station = login_state.station;
+	name_heading.innerHTML = station.name;
+	capacity_badge.innerHTML = `Capacity: ${station.capacity}`;
+	score_sign_badge.innerHTML = score_sign_list[station.score_sign].name;
+	score_base_badge.innerHTML = station.score_base !== null ? `Score base: ${station.score_base}` : '';
+	score_high_badge.innerHTML = station.score_high !== null ? `Score high: ${station.score_high}` : '';
+	if (login_state.participant_list.length === station.capacity)
 		player_form.classList.add('d-none');
 	else
 		player_form.classList.remove('d-none');
-	if (state.participant_list.length !== 0)
+	if (login_state.participant_list.length !== 0)
 		player_list.classList.remove('d-none');
 	else
 		player_list.classList.add('d-none');
 	player_list.innerHTML = '';
-	player_list.append(...state.participant_list.map((player, index) => n({
+	player_list.append(...login_state.participant_list.map((player, index) => n({
 		class: 'list-group-item p-1',
 		content: [
 			n({
@@ -167,7 +223,7 @@ function render() {
 					n({
 						class: 'p-0 d-flex align-items-center col-8 col-md-3',
 						content: [
-							team2_badge(state.team_map.get(player.team)),
+							team2_badge(login_state.team_map.get(player.team)),
 						],
 					}),
 					n({
@@ -178,7 +234,7 @@ function render() {
 								class: 'm-1 btn btn-danger btn-sm',
 								content: 'Remove',
 								click: () => {
-									state.participant_list.splice(index, 1);
+									login_state.participant_list.splice(index, 1);
 									render();
 								},
 							}),
@@ -188,7 +244,7 @@ function render() {
 			}),
 		],
 	})));
-	if (state.participant_list.length === state.station.capacity)
+	if (login_state.participant_list.length === station.capacity)
 		attempt_form.classList.remove('d-none');
 	else
 		attempt_form.classList.add('d-none');
@@ -200,9 +256,9 @@ function render() {
 		conqueror: null,
 		record: null,
 	};
-	state.attempt_list.forEach(attempt => {
-		const team = state.team_map.get(attempt.team);
-		const type = attempt_type(state.station.score_sign, state.station.score_base, state.station.score_high, attempt.score, attempt.team, memory);
+	login_state.attempt_list.forEach(attempt => {
+		const team = login_state.team_map.get(attempt.team);
+		const type = attempt_type(station.score_sign, station.score_base, station.score_high, attempt.score, attempt.team, memory);
 		attempt_list.prepend(n({
 			class: 'list-group-item p-1',
 			content: [
@@ -214,7 +270,7 @@ function render() {
 							content: [
 								n({
 									class: 'm-1 badge text-bg-info',
-									content: human_duration(attempt.time - page.game.game_start),
+									content: human_duration(attempt.time - home_state.game.game_start),
 								}),
 							],
 						}),
@@ -249,15 +305,15 @@ function render() {
 											return;
 										}
 										const form_data = new FormData();
-										form_data.append('game', page.game.name);
-										form_data.append('station', state.station.id.toFixed());
-										form_data.append('code', state.code);
+										form_data.append('game', home_state.game.name);
+										form_data.append('station', login_state.station.id.toFixed());
+										form_data.append('code', login_state.code);
 										form_data.append('id', attempt.id.toFixed());
 										/**
-										 * @type {Login}
+										 * @type {LoginResult}
 										 */
 										const result = await api.post('attempt_delete', form_data);
-										state = state_create(form_data, result);
+										login_result_to_state(form_data, result);
 										spinner_div.classList.add('d-none');
 										render();
 									},
@@ -277,31 +333,6 @@ function render() {
 const spinner_div = document.getElementById('spinner-div');
 
 /**
- * @type {HTMLDivElement}
- */
-const timer_div = document.getElementById('timer-div');
-
-/**
- * @type {?number}
- */
-let timer = null;
-function timer_tick() {
-	const time = page.time_offset + Date.now() / 1000;
-	if (time < page.game.game_start) {
-		timer_div.innerHTML = `Game start: ${human_duration(page.game.game_start - time)}`;
-	} else if (time < page.game.game_stop) {
-		timer_div.innerHTML = `Game stop: ${human_duration(page.game.game_stop - time)}`;
-	} else {
-		timer_div.innerHTML = 'Game over.';
-		if (timer !== null)
-			clearInterval(timer);
-	}
-}
-timer = setInterval(timer_tick, 1000);
-timer_tick();
-timer_div.classList.remove('d-none');
-
-/**
  * @type {HTMLFormElement}
  */
 const login_form = document.getElementById('login-form');
@@ -312,9 +343,9 @@ login_form.addEventListener('submit', async event => {
 		return;
 	spinner_div.classList.remove('d-none');
 	const form_data = new FormData(login_form);
-	form_data.append('game', page.game.name);
+	form_data.append('game', home_state.game.name);
 	/**
-	 * @type {Login|null}
+	 * @type {?LoginResult}
 	 */
 	const result = await api.post('station2_login', form_data);
 	if (result === null) {
@@ -323,13 +354,17 @@ login_form.addEventListener('submit', async event => {
 		return;
 	}
 	login_form.reset();
-	localStorage.setItem('game', form_data.get('game'));
-	localStorage.setItem('station', form_data.get('station'));
-	localStorage.setItem('code', form_data.get('code'));
-	state = state_create(form_data, result);
+	localStorage.setItem(`game-${home_state.game.id}-station`, form_data.get('station'));
+	localStorage.setItem(`game-${home_state.game.id}-code`, form_data.get('code'));
+	login_result_to_state(form_data, result);
 	spinner_div.classList.add('d-none');
 	render();
 });
+
+/**
+ * @type {HTMLSelectElement}
+ */
+const station_select = document.getElementById('station-select');
 
 /**
  * @type {HTMLDivElement}
@@ -345,6 +380,13 @@ const name_heading = document.getElementById('name-heading');
  * @type {HTMLButtonElement}
  */
 const logout_button = document.getElementById('logout-button');
+
+logout_button.addEventListener('click', () => {
+	localStorage.removeItem(`game-${home_state.game.id}-station`);
+	localStorage.removeItem(`game-${home_state.game.id}-code`);
+	login_state = null;
+	render();
+});
 
 /**
  * @type {HTMLDivElement}
@@ -366,14 +408,6 @@ const score_base_badge = document.getElementById('score-base-badge');
  */
 const score_high_badge = document.getElementById('score-high-badge');
 
-logout_button.addEventListener('click', () => {
-	localStorage.removeItem('game');
-	localStorage.removeItem('station');
-	localStorage.removeItem('code');
-	state = null;
-	render();
-});
-
 /**
  * @type {HTMLFormElement}
  */
@@ -383,18 +417,18 @@ player_form.addEventListener('submit', event => {
 	event.preventDefault();
 	const form_data = new FormData(player_form);
 	const mark = form_data.get('mark');
-	const player = state.player_map.get(mark) ?? null;
+	const player = login_state.player_map.get(mark) ?? null;
 	if (player === null) {
 		alert('Player not found.');
 		return;
-	} else if (state.participant_list.some(p => p.id === player.id)) {
+	} else if (login_state.participant_list.some(participant => participant.id === player.id)) {
 		alert('Player is already added.');
 		return;
-	} else if (state.participant_list.some(p => p.team !== player.team)) {
+	} else if (login_state.participant_list.some(participant => participant.team !== player.team)) {
 		alert('Player belongs to a different team.');
 		return;
 	}
-	state.participant_list.push(player);
+	login_state.participant_list.push(player);
 	player_form.reset();
 	render();
 });
@@ -414,27 +448,27 @@ attempt_form.addEventListener('submit', async event => {
 	if (!spinner_div.classList.contains('d-none'))
 		return;
 	spinner_div.classList.remove('d-none');
-	const time = page.time_offset + Date.now() / 1000;
-	if (time < page.game.game_start) {
+	const time = home_state.time_offset + Date.now() / 1000;
+	if (time < home_state.game.game_start) {
 		alert('The game has not started.');
 		spinner_div.classList.add('d-none');
 		return;
 	}
-	if (time >= page.game.game_stop) {
+	if (time >= home_state.game.game_stop) {
 		alert('The game has ended.');
 		spinner_div.classList.add('d-none');
 		return;
 	}
 	const form_data = new FormData(attempt_form);
-	form_data.append('game', page.game.name);
-	form_data.append('station', state.station.id.toFixed());
-	form_data.append('code', state.code);
-	form_data.append('participant_list', state.participant_list.map(player => player.id.toFixed()).join(','));
+	form_data.append('game', home_state.game.name);
+	form_data.append('station', login_state.station.id.toFixed());
+	form_data.append('code', login_state.code);
+	form_data.append('participant_list', login_state.participant_list.map(participant => participant.id.toFixed()).join(','));
 	/**
-	 * @type {Login}
+	 * @type {?LoginResult}
 	 */
 	const result = await api.post('attempt_insert', form_data);
-	state = state_create(form_data, result);
+	login_result_to_state(form_data, result);
 	spinner_div.classList.add('d-none');
 	attempt_form.reset();
 	render();
@@ -446,30 +480,19 @@ attempt_form.addEventListener('submit', async event => {
 const attempt_list = document.getElementById('attempt-list');
 
 await (async () => {
-	const game = localStorage.getItem('game');
-	if (game === null || game !== page.game.name) {
-		spinner_div.classList.add('d-none');
-		render();
-		return;
-	}
-	const station = localStorage.getItem('station');
-	if (station === null) {
-		spinner_div.classList.add('d-none');
-		render();
-		return;
-	}
-	const code = localStorage.getItem('code');
-	if (code === null) {
+	const station = localStorage.getItem(`game-${home_state.game.id}-station`);
+	const code = localStorage.getItem(`game-${home_state.game.id}-code`);
+	if (station === null || code === null) {
 		spinner_div.classList.add('d-none');
 		render();
 		return;
 	}
 	const form_data = new FormData();
-	form_data.append('game', game);
+	form_data.append('game', home_state.game.name);
 	form_data.append('station', station);
 	form_data.append('code', code);
 	/**
-	 * @type {Login|null}
+	 * @type {?LoginResult}
 	 */
 	const result = await api.post('station2_login', form_data);
 	if (result === null) {
@@ -477,7 +500,7 @@ await (async () => {
 		render();
 		return;
 	}
-	state = state_create(form_data, result);
+	login_result_to_state(form_data, result);
 	spinner_div.classList.add('d-none');
 	render();
 })();
