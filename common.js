@@ -133,7 +133,7 @@ export function human_duration(seconds) {
 	const sign = seconds < 0 ? '-' : '';
 	if (seconds < 0)
 		seconds = -seconds;
-	seconds = Math.floor(seconds);
+	seconds = Math.round(seconds);
 	let minutes = Math.floor(seconds / 60);
 	seconds -= minutes * 60;
 	let hours = Math.floor(minutes / 60);
