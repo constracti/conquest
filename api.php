@@ -341,6 +341,13 @@ function station2_get_capacity(int $id): ?int {
 	return stmt_cell($stmt);
 }
 
+function station2_count_attempts(int $id): int {
+	global $db;
+	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `attempt` WHERE `station` = ?');
+	$stmt->bind_param('i', $id);
+	return stmt_cell($stmt);
+}
+
 function station2_insert(
 	string $name, string $code, ?int $polygon,
 	int $capacity, bool $score_sign, ?int $score_base, ?int $score_high, int $game,
@@ -408,6 +415,13 @@ function team2_count_players(int $id): int {
 	return stmt_cell($stmt);
 }
 
+function team2_count_attempts(int $id): int {
+	global $db;
+	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `attempt` WHERE `team` = ?');
+	$stmt->bind_param('i', $id);
+	return stmt_cell($stmt);
+}
+
 function team2_insert(string $name, string $background_color, string $text_color, int $game): void {
 	global $db;
 	$stmt = $db->prepare('INSERT INTO `team2` (`name`, `background_color`, `text_color`, `game`) VALUES (?, ?, ?, ?)');
@@ -462,6 +476,13 @@ function player2_get_team(int $id): ?int {
 	return stmt_cell($stmt);
 }
 
+function player2_count_attempts(int $id): int {
+	global $db;
+	$stmt = $db->prepare('SELECT COUNT(`attempt`) FROM `participant` WHERE `player` = ?');
+	$stmt->bind_param('i', $id);
+	return stmt_cell($stmt);
+}
+
 function player2_insert(string $name, string $mark, int $team, int $game): void {
 	global $db;
 	$stmt = $db->prepare('INSERT INTO `player2` (`name`, `mark`, `team`, `game`) VALUES (?, ?, ?, ?)');
@@ -496,6 +517,27 @@ function player2_truncate(int $game): void {
 
 // attempt
 
+function attempt_select_by_game(int $game): array {
+	global $db;
+	$stmt = $db->prepare('SELECT `id`, `station`, `team`, `time` FROM `attempt` WHERE `game` = ? ORDER BY `id` ASC');
+	$stmt->bind_param('i', $game);
+	$attempt_list = stmt_list($stmt);
+	$attempt_list = array_map(function(array $item): array {
+		$item['time'] = DT::from_int($item['time'])->to_sql();
+		$item['player_list'] = [];
+		return $item;
+	}, $attempt_list);
+	$attempt_list = array_combine(array_column($attempt_list, 'id'), $attempt_list);
+	$stmt = $db->prepare('SELECT `attempt`, `player` FROM `participant` WHERE `game` = ? ORDER BY `attempt` ASC');
+	$stmt->bind_param('i', $game);
+	$participant_list = stmt_list($stmt);
+	foreach ($participant_list as $participant) {
+		$attempt = $participant['attempt'];
+		$attempt_list[$attempt]['player_list'][] = $participant['player'];
+	}
+	return array_values($attempt_list);
+}
+
 function attempt_select_by_station(int $station): array {
 	global $db;
 	$stmt = $db->prepare('SELECT `id`, `station`, `team`, `score`, `time` FROM `attempt` WHERE `station` = ? ORDER BY `time` ASC, `id` ASC');
@@ -525,6 +567,24 @@ function attempt_delete(int $id): void {
 	global $db;
 	$stmt = $db->prepare('DELETE FROM `attempt` WHERE `id` = ?');
 	$stmt->bind_param('i', $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function attempt_delete_by_range(DT $game_start, DT $game_stop, int $game): void {
+	global $db;
+	$game_start = $game_start->to_int();
+	$game_stop = $game_stop->to_int();
+	$stmt = $db->prepare('DELETE FROM `attempt` WHERE `game` = ? AND (`time` < ? OR `time` >= ?)');
+	$stmt->bind_param('iii', $game, $game_start, $game_stop);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function attempt_truncate(int $game): void {
+	global $db;
+	$stmt = $db->prepare('DELETE FROM `attempt` WHERE `game` = ?');
+	$stmt->bind_param('i', $game);
 	$stmt->execute();
 	$stmt->close();
 }
@@ -805,6 +865,7 @@ if (is_post('game_register')) {
 		'station_list' => station2_select_by_game($id),
 		'team_list' => team2_select_by_game($id),
 		'player_list' => player2_select_by_game($id),
+		'attempt_list' => attempt_select_by_game($id),
 	]);
 }
 
@@ -822,6 +883,7 @@ if (is_post('game_login')) {
 		'station_list' => station2_select_by_game($id),
 		'team_list' => team2_select_by_game($id),
 		'player_list' => player2_select_by_game($id),
+		'attempt_list' => attempt_select_by_game($id),
 	]);
 }
 
@@ -839,12 +901,15 @@ if (is_post('game_update')) {
 	$game_stop = DT::from_js($game_stop);
 	if ($game_stop->to_int() < $game_start->to_int())
 		exit('game_stop');
-	// TODO trim attempts
 	$reward_success = post_int('reward_success');
 	$reward_conquest = post_int('reward_conquest');
 	$reward_rate = post_float('reward_rate');
 	game_update($id, $title, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate);
-	json(game_select_by_id($id));
+	attempt_delete_by_range($game_start, $game_stop, $id);
+	json([
+		'game' => game_select_by_id($id),
+		'attempt_list' => attempt_select_by_game($id),
+	]);
 }
 
 if (is_post('game_insert_map')) {
@@ -976,6 +1041,8 @@ if (is_post('station2_delete')) {
 	$id = post_int('id');
 	if (!station2_belongs_to_game($id, $game))
 		exit('id');
+	if (station2_count_attempts($id) !== 0)
+		exit('id');
 	station2_delete($id);
 	json(station2_select_by_game($game));
 }
@@ -1021,6 +1088,8 @@ if (is_post('team2_delete')) {
 	if (!team2_belongs_to_game($id, $game))
 		exit('id');
 	if (team2_count_players($id) !== 0)
+		exit('id');
+	if (team2_count_attempts($id) !== 0)
 		exit('id');
 	team2_delete($id);
 	json(team2_select_by_game($game));
@@ -1069,6 +1138,8 @@ if (is_post('player2_delete')) {
 		exit('password');
 	$id = post_int('id');
 	if (!player2_belongs_to_game($id, $game))
+		exit('id');
+	if (!player2_count_attempts($id) !== 0)
 		exit('id');
 	player2_delete($id);
 	json(player2_select_by_game($game));
@@ -1123,13 +1194,21 @@ if (is_post('player2_import')) {
 		}
 		$player_list[] = $line;
 	}
+	attempt_truncate($game);
 	player2_truncate($game);
 	foreach ($player_list as $player)
 		player2_insert($player['name'], $player['mark'], $player['team'], $game);
 	json(player2_select_by_game($game));
 }
 
-// TODO attempt truncate
+if (is_post('attempt_truncate')) {
+	$game = post_int('game');
+	$password = post_string('password');
+	if (!game_matches($game, $password))
+		exit('password');
+	attempt_truncate($game);
+	json(NULL);
+}
 
 // TODO delete POST admin_login
 if (is_post('admin_login')) {

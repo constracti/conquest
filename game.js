@@ -47,6 +47,16 @@ import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from '
  */
 
 /**
+ * @typedef Attempt
+ * @type {object}
+ * @property {number} id
+ * @property {number} station
+ * @property {number} team
+ * @property {string} time
+ * @property {number[]} player_list
+ */
+
+/**
  * @typedef Login
  * @type {object}
  * @property {Game} game
@@ -54,6 +64,7 @@ import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from '
  * @property {Station[]} station_list
  * @property {Team2[]} team_list
  * @property {Player2[]} player_list
+ * @property {Attempt[]} attempt_list
  */
 
 /**
@@ -64,6 +75,7 @@ import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from '
  * @property {Station[]} station_list
  * @property {Team2[]} team_list
  * @property {Player2[]} player_list
+ * @property {Attempt[]} attempt_list
  * @property {string} password
  */
 
@@ -89,6 +101,7 @@ function render() {
 	render_station();
 	render_team();
 	render_player();
+	attempt_truncate.disabled = state.attempt_list.length === 0;
 }
 
 function render_game() {
@@ -495,6 +508,10 @@ function render_polygon() {
 function render_station() {
 	const polygon_set = new Set(state.station_list.map(station => station.polygon).filter(polygon => polygon !== null));
 	const polygon_map = new Map(state.polygon_list.map(polygon => [polygon.id, polygon]));
+	const attempt_count_map_by_station = new Map(state.station_list.map(station => [station.id, 0]));
+	state.attempt_list.forEach(attempt => {
+		attempt_count_map_by_station.set(attempt.station, attempt_count_map_by_station.get(attempt.station) + 1);
+	});
 	/**
 	 * @param {?Station} station
 	 * @returns {HTMLDivElement}
@@ -555,6 +572,9 @@ function render_station() {
 					render();
 				},
 				content: 'Delete',
+				custom: element => {
+					element.disabled = attempt_count_map_by_station.get(station.id) !== 0;
+				},
 			}));
 		}
 		// form
@@ -596,7 +616,7 @@ function render_station() {
 							name: 'code',
 							value: station?.code,
 							required: true,
-							text: 'A password used to submit successes.',
+							text: 'A password used to submit attempts.',
 						}),
 						n_form_control({
 							type: 'select',
@@ -669,6 +689,10 @@ function render_team() {
 	state.player_list.forEach(player => {
 		player_count_map_by_team.set(player.team, player_count_map_by_team.get(player.team) + 1);
 	});
+	const attempt_count_map_by_team = new Map(state.team_list.map(team => [team.id, 0]));
+	state.attempt_list.forEach(attempt => {
+		attempt_count_map_by_team.set(attempt.team, attempt_count_map_by_team.get(attempt.team) + 1);
+	});
 	/**
 	 * @param {?Team2} team
 	 * @returns {HTMLDivElement}
@@ -727,7 +751,7 @@ function render_team() {
 				},
 				content: 'Delete',
 				custom: element => {
-					element.disabled = player_count_map_by_team.get(team.id) !== 0;
+					element.disabled = player_count_map_by_team.get(team.id) !== 0 || attempt_count_map_by_team.get(team.id) !== 0;
 				},
 			}));
 		}
@@ -804,6 +828,12 @@ function render_team() {
 
 function render_player() {
 	const team_map = new Map(state.team_list.map(team => [team.id, team]));
+	const attempt_count_map_by_player = new Map(state.player_list.map(player => [player.id, 0]));
+	state.attempt_list.forEach(attempt => {
+		attempt.player_list.forEach(player => {
+			attempt_count_map_by_player.set(player, attempt_count_map_by_player.get(player) + 1);
+		});
+	});
 	/**
 	 * @param {?Player2} player
 	 * @returns {HTMLDivElement}
@@ -867,6 +897,9 @@ function render_player() {
 					render();
 				},
 				content: 'Delete',
+				custom: element => {
+					element.disabled = attempt_count_map_by_player.get(player.id) !== 0;
+				},
 			}));
 		}
 		// form
@@ -974,6 +1007,7 @@ login_form.addEventListener('submit', async event => {
 		station_list: result.station_list,
 		team_list: result.team_list,
 		player_list: result.player_list,
+		attempt_list: result.attempt_list,
 		password: form_data.get('password'),
 	};
 	spinner_div.classList.add('d-none');
@@ -1046,6 +1080,7 @@ register_form.addEventListener('submit', async event => {
 		station_list: result.station_list,
 		team_list: result.team_list,
 		player_list: result.player_list,
+		attempt_list: result.attempt_list,
 		password: form_data.get('password'),
 	};
 	spinner_div.classList.add('d-none');
@@ -1087,11 +1122,27 @@ game_form.addEventListener('submit', async event => {
 	const form_data = new FormData(event.currentTarget);
 	form_data.append('id', state.game.id.toFixed());
 	form_data.append('password', state.password);
+	const game_start = form_data.get('game_start').replace('T', ' ') + ':00';
+	const game_stop = form_data.get('game_stop').replace('T', ' ') + ':00';
+	const attempt_before_count = state.attempt_list.filter(attempt => attempt.time < game_start).length;
+	const attempt_before_text = attempt_before_count > 0 ?
+		(attempt_before_count > 1 ? `${attempt_before_count} attempts` : '1 attempt') + ' before' :
+		null;
+	const attempt_after_count = state.attempt_list.filter(attempt => attempt.time >= game_stop).length;
+	const attempt_after_text = attempt_after_count > 0 ?
+		(attempt_after_count > 1 ? `${attempt_after_count} attempts` : '1 attempt') + ' after' :
+		null;
+	const attempt_text = [attempt_before_text, attempt_after_text].filter(text => text !== null);
+	if (attempt_text.length && !confirm(attempt_text.join(' and ') + ' the specified range will be deleted.')) {
+		spinner_div.classList.add('d-none');
+		return;
+	}
 	/**
-	 * @type {Game}
+	 * @type {{game: Game, attempt_list: Attempt[]}}
 	 */
 	const result = await api.post('game_update', form_data);
-	state.game = result;
+	state.game = result.game;
+	state.attempt_list = result.attempt_list;
 	spinner_div.classList.add('d-none');
 	render();
 });
@@ -1244,7 +1295,7 @@ import_form.addEventListener('submit', async event => {
 	if (!spinner_div.classList.contains('d-none'))
 		return;
 	spinner_div.classList.remove('d-none');
-	if (!confirm('Delete all existing players and related successes?')) {
+	if (!confirm('Delete all existing players and attempts?')) {
 		spinner_div.classList.add('d-none');
 		return;
 	}
@@ -1261,6 +1312,7 @@ import_form.addEventListener('submit', async event => {
 		return;
 	}
 	state.player_list = result;
+	state.attempt_list = [];
 	spinner_div.classList.add('d-none');
 	import_form.reset();
 	import_modal.hide();
@@ -1280,6 +1332,28 @@ const import_textarea = document.getElementById('import-textarea');
 const import_cancel = document.getElementById('import-cancel');
 import_cancel.addEventListener('click', () => {
 	import_modal.hide();
+});
+
+/**
+ * @type {HTMLButtonElement}
+ */
+const attempt_truncate = document.getElementById('attempt-truncate');
+
+attempt_truncate.addEventListener('click', async () => {
+	if (!spinner_div.classList.contains('d-none'))
+		return;
+	spinner_div.classList.remove('d-none');
+	if (!confirm('Delete all attempts?')) {
+		spinner_div.classList.add('d-none');
+		return;
+	}
+	const form_data = new FormData();
+	form_data.append('game', state.game.id.toFixed());
+	form_data.append('password', state.password);
+	await api.post('attempt_truncate', form_data);
+	state.attempt_list = [];
+	spinner_div.classList.add('d-none');
+	render();
 });
 
 await (async () => {
@@ -1306,6 +1380,7 @@ await (async () => {
 		station_list: result.station_list,
 		team_list: result.team_list,
 		player_list: result.player_list,
+		attempt_list: result.attempt_list,
 		password: password,
 	};
 	render();
