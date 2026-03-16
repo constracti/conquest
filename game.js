@@ -2,58 +2,27 @@ import { api, score_sign_list, team2_badge } from './common.js';
 import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from './element.js';
 
 /**
- * @typedef Game
- * @type {object}
- * @property {number} id
- * @property {string} name
- * @property {?string} title
- * @property {number} game_start
- * @property {string} game_start_js
- * @property {number} game_stop
- * @property {string} game_stop_js
- * @property {number} reward_success
- * @property {number} reward_conquest
- * @property {number} reward_rate
- * @property {?string} map
+ * @typedef {import('./common.js').Game2} Game
  */
 
 /**
- * @typedef Polygon
- * @type {object}
- * @property {number} id
- * @property {string} name
- * @property {?string} content
+ * @typedef {import('./common.js').Polygon} Polygon
  */
 
 /**
- * @typedef Station
- * @type {object}
- * @property {number} id
- * @property {string} name
- * @property {string} code
- * @property {?number} polygon
- * @property {number} capacity
- * @property {boolean} score_sign
- * @property {?number} score_base
- * @property {?number} score_high
+ * @typedef {import('./common.js').Station2} Station
  */
 
 /**
- * @typedef {import('./common.js').Team2} Team2
+ * @typedef {import('./common.js').Team2} Team
  */
 
 /**
- * @typedef {import('./common.js').Player2} Player2
+ * @typedef {import('./common.js').Player2} Player
  */
 
 /**
- * @typedef Attempt
- * @type {object}
- * @property {number} id
- * @property {number} station
- * @property {number} team
- * @property {string} time
- * @property {number[]} player_list
+ * @typedef {import('./common.js').Attempt} Attempt
  */
 
 /**
@@ -62,8 +31,8 @@ import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from '
  * @property {Game} game
  * @property {Polygon[]} polygon_list
  * @property {Station[]} station_list
- * @property {Team2[]} team_list
- * @property {Player2[]} player_list
+ * @property {Team[]} team_list
+ * @property {Player[]} player_list
  * @property {Attempt[]} attempt_list
  */
 
@@ -73,8 +42,8 @@ import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from '
  * @property {Game} game
  * @property {Polygon[]} polygon_list
  * @property {Station[]} station_list
- * @property {Team2[]} team_list
- * @property {Player2[]} player_list
+ * @property {Team[]} team_list
+ * @property {Player[]} player_list
  * @property {Attempt[]} attempt_list
  * @property {string} password
  */
@@ -694,7 +663,7 @@ function render_team() {
 		attempt_count_map_by_team.set(attempt.team, attempt_count_map_by_team.get(attempt.team) + 1);
 	});
 	/**
-	 * @param {?Team2} team
+	 * @param {?Team} team
 	 * @returns {HTMLDivElement}
 	 */
 	function row(team) {
@@ -742,7 +711,7 @@ function render_team() {
 					form_data.append('password', state.password);
 					form_data.append('id', team.id.toFixed());
 					/**
-					 * @type {Team2[]}
+					 * @type {Team[]}
 					 */
 					const result = await api.post('team2_delete', form_data);
 					state.team_list = result;
@@ -769,7 +738,7 @@ function render_team() {
 				form_data.append('game', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				/**
-				 * @type {Team2[]|null}
+				 * @type {Team[]|null}
 				 */
 				const result = await api.post(team !== null ? 'team2_update' : 'team2_insert', form_data);
 				if (result === null) {
@@ -835,7 +804,7 @@ function render_player() {
 		});
 	});
 	/**
-	 * @param {?Player2} player
+	 * @param {?Player} player
 	 * @returns {HTMLDivElement}
 	 */
 	function row(player) {
@@ -889,7 +858,7 @@ function render_player() {
 					form_data.append('password', state.password);
 					form_data.append('id', player.id.toFixed());
 					/**
-					 * @type {Player2[]}
+					 * @type {Player[]}
 					 */
 					const result = await api.post('player2_delete', form_data);
 					state.player_list = result;
@@ -916,7 +885,7 @@ function render_player() {
 				form_data.append('game', state.game.id.toFixed());
 				form_data.append('password', state.password);
 				/**
-				 * @type {Player2[]|null}
+				 * @type {Player[]|null}
 				 */
 				const result = await api.post(player !== null ? 'player2_update' : 'player2_insert', form_data);
 				if (result === null) {
@@ -1124,11 +1093,11 @@ game_form.addEventListener('submit', async event => {
 	form_data.append('password', state.password);
 	const game_start = form_data.get('game_start').replace('T', ' ') + ':00';
 	const game_stop = form_data.get('game_stop').replace('T', ' ') + ':00';
-	const attempt_before_count = state.attempt_list.filter(attempt => attempt.time < game_start).length;
+	const attempt_before_count = state.attempt_list.filter(attempt => attempt.time_sql < game_start).length;
 	const attempt_before_text = attempt_before_count > 0 ?
 		(attempt_before_count > 1 ? `${attempt_before_count} attempts` : '1 attempt') + ' before' :
 		null;
-	const attempt_after_count = state.attempt_list.filter(attempt => attempt.time >= game_stop).length;
+	const attempt_after_count = state.attempt_list.filter(attempt => attempt.time_sql >= game_stop).length;
 	const attempt_after_text = attempt_after_count > 0 ?
 		(attempt_after_count > 1 ? `${attempt_after_count} attempts` : '1 attempt') + ' after' :
 		null;
@@ -1303,7 +1272,7 @@ import_form.addEventListener('submit', async event => {
 	form_data.append('game', state.game.id.toFixed());
 	form_data.append('password', state.password);
 	/**
-	 * @type {Player2[]|{error: string, line: number}}
+	 * @type {Player[]|{error: string, line: number}}
 	 */
 	const result = await api.post('player2_import', form_data);
 	if ('error' in result) {

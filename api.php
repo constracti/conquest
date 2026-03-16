@@ -291,25 +291,14 @@ function polygon_delete(int $id): void {
 
 // station2
 
-function station2_select_by_game(int $game): array {
+function station2_select_by_game(int $game, bool $sensitive = FALSE): array {
 	global $db;
 	$stmt = $db->prepare('
-	SELECT `id`, `name`, `code`, `polygon`, `capacity`, `score_sign`, `score_base`, `score_high`
+	SELECT `id`, `name`, IF(?, `code`, \'\') AS `code`, `polygon`, `capacity`, `score_sign`, `score_base`, `score_high`
 	FROM `station2`
 	WHERE `game` = ? ORDER BY `name` ASC, `id` ASC
 	');
-	$stmt->bind_param('i', $game);
-	return stmt_list($stmt);
-}
-
-function station2_list_by_game(int $game): array {
-	global $db;
-	$stmt = $db->prepare('
-	SELECT `id`, `name`, `capacity`, `score_sign`, `score_base`, `score_high`
-	FROM `station2`
-	WHERE `game` = ? ORDER BY `name` ASC, `id` ASC
-	');
-	$stmt->bind_param('i', $game);
+	$stmt->bind_param('ii', $sensitive, $game);
 	return stmt_list($stmt);
 }
 
@@ -519,11 +508,11 @@ function player2_truncate(int $game): void {
 
 function attempt_select_by_game(int $game): array {
 	global $db;
-	$stmt = $db->prepare('SELECT `id`, `station`, `team`, `time` FROM `attempt` WHERE `game` = ? ORDER BY `id` ASC');
+	$stmt = $db->prepare('SELECT `id`, `station`, `team`, `score`, `time` FROM `attempt` WHERE `game` = ? ORDER BY `id` ASC');
 	$stmt->bind_param('i', $game);
 	$attempt_list = stmt_list($stmt);
 	$attempt_list = array_map(function(array $item): array {
-		$item['time'] = DT::from_int($item['time'])->to_sql();
+		$item['time_sql'] = DT::from_int($item['time'])->to_sql();
 		$item['player_list'] = [];
 		return $item;
 	}, $attempt_list);
@@ -542,7 +531,25 @@ function attempt_select_by_station(int $station): array {
 	global $db;
 	$stmt = $db->prepare('SELECT `id`, `station`, `team`, `score`, `time` FROM `attempt` WHERE `station` = ? ORDER BY `time` ASC, `id` ASC');
 	$stmt->bind_param('i', $station);
-	return stmt_list($stmt);
+	$attempt_list = stmt_list($stmt);
+	$attempt_list = array_map(function(array $item): array {
+		$item['time_sql'] = DT::from_int($item['time'])->to_sql();
+		$item['player_list'] = [];
+		return $item;
+	}, $attempt_list);
+	$attempt_list = array_combine(array_column($attempt_list, 'id'), $attempt_list);
+	$stmt = $db->prepare('
+	SELECT `attempt`.`id` AS `attempt`, `participant`.`player`
+	FROM `participant`
+	JOIN `attempt` ON `attempt`.`id` = `participant`.`attempt` AND `attempt`.`station` = ?
+	');
+	$stmt->bind_param('i', $station);
+	$participant_list = stmt_list($stmt);
+	foreach ($participant_list as $participant) {
+		$attempt = $participant['attempt'];
+		$attempt_list[$attempt]['player_list'][] = $participant['player'];
+	}
+	return array_values($attempt_list);
 }
 
 function attempt_belongs_to_game(int $id, int $game): bool {
@@ -862,7 +869,7 @@ if (is_post('game_register')) {
 	json([
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
-		'station_list' => station2_select_by_game($id),
+		'station_list' => station2_select_by_game($id, TRUE),
 		'team_list' => team2_select_by_game($id),
 		'player_list' => player2_select_by_game($id),
 		'attempt_list' => attempt_select_by_game($id),
@@ -880,7 +887,7 @@ if (is_post('game_login')) {
 	json([
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
-		'station_list' => station2_select_by_game($id),
+		'station_list' => station2_select_by_game($id, TRUE),
 		'team_list' => team2_select_by_game($id),
 		'player_list' => player2_select_by_game($id),
 		'attempt_list' => attempt_select_by_game($id),
@@ -1002,7 +1009,7 @@ if (is_post('station2_insert')) {
 	$score_base = post_int_nullable('score_base');
 	$score_high = post_int_nullable('score_high');
 	station2_insert($name, $code, $polygon, $capacity, $score_sign, $score_base, $score_high, $game);
-	json(station2_select_by_game($game));
+	json(station2_select_by_game($game, TRUE));
 }
 
 if (is_post('station2_update')) {
@@ -1030,7 +1037,7 @@ if (is_post('station2_update')) {
 	$score_base = post_int_nullable('score_base');
 	$score_high = post_int_nullable('score_high');
 	station2_update($id, $name, $code, $polygon, $capacity, $score_sign, $score_base, $score_high);
-	json(station2_select_by_game($game));
+	json(station2_select_by_game($game, TRUE));
 }
 
 if (is_post('station2_delete')) {
@@ -1044,7 +1051,7 @@ if (is_post('station2_delete')) {
 	if (station2_count_attempts($id) !== 0)
 		exit('id');
 	station2_delete($id);
-	json(station2_select_by_game($game));
+	json(station2_select_by_game($game, TRUE));
 }
 
 if (is_post('team2_insert')) {
@@ -1236,7 +1243,7 @@ if (is_post('station2_list')) {
 	json([
 		'game' => game_select_by_id($game),
 		'time' => time(),
-		'station_list' => station2_list_by_game($game),
+		'station_list' => station2_select_by_game($game),
 	]);
 }
 
@@ -1254,7 +1261,7 @@ if (is_post('station2_login')) {
 	json([
 		'game' => game_select_by_id($game),
 		'time' => time(),
-		'station_list' => station2_list_by_game($game),
+		'station_list' => station2_select_by_game($game),
 		'team_list' => team2_select_by_game($game),
 		'player_list' => player2_select_by_game($game),
 		'attempt_list' => attempt_select_by_station($station),
@@ -1306,7 +1313,7 @@ if (is_post('attempt_insert')) {
 	json([
 		'game' => game_select_by_id($game),
 		'time' => time(),
-		'station_list' => station2_list_by_game($game),
+		'station_list' => station2_select_by_game($game),
 		'team_list' => team2_select_by_game($game),
 		'player_list' => player2_select_by_game($game),
 		'attempt_list' => attempt_select_by_station($station),
@@ -1331,7 +1338,7 @@ if (is_post('attempt_delete')) {
 	json([
 		'game' => game_select_by_id($game),
 		'time' => time(),
-		'station_list' => station2_list_by_game($game),
+		'station_list' => station2_select_by_game($game),
 		'team_list' => team2_select_by_game($game),
 		'player_list' => player2_select_by_game($game),
 		'attempt_list' => attempt_select_by_station($station),

@@ -2,12 +2,49 @@ import { API } from './api.js';
 import { n } from './element.js';
 
 /**
+ * @typedef Game2
+ * @type {object}
+ * @property {number} id
+ * @property {string} name
+ * @property {?string} title
+ * @property {number} game_start
+ * @property {string} game_start_js
+ * @property {number} game_stop
+ * @property {string} game_stop_js
+ * @property {number} reward_success
+ * @property {number} reward_conquest
+ * @property {number} reward_rate
+ * @property {?string} map
+ */
+
+/**
+ * @typedef Polygon
+ * @type {object}
+ * @property {number} id
+ * @property {string} name
+ * @property {?string} content
+ */
+
+/**
  * @typedef Station
  * @type {object}
  * @property {number} id
  * @property {string} name
  * @property {number} capacity - positive integer
  * @property {?number} place
+ */
+
+/**
+ * @typedef Station2
+ * @type {object}
+ * @property {number} id
+ * @property {string} name
+ * @property {string} code
+ * @property {?number} polygon
+ * @property {number} capacity
+ * @property {boolean} score_sign
+ * @property {?number} score_base
+ * @property {?number} score_high
  */
 
 /**
@@ -43,6 +80,18 @@ import { n } from './element.js';
  * @property {string} name
  * @property {string} mark
  * @property {number} team
+ */
+
+/**
+ * @typedef Attempt
+ * @type {object}
+ * @property {number} id
+ * @property {number} station
+ * @property {number} team
+ * @property {number} score
+ * @property {number} time
+ * @property {string} time_sql
+ * @property {number[]} player_list
  */
 
 /**
