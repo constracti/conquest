@@ -2,48 +2,23 @@ import { api, attempt_type, human_duration, score_sign_list, team2_badge } from 
 import { n, n_option_list2 } from './element.js';
 
 /**
- * @typedef Game
- * @type {object}
- * @property {number} id
- * @property {string} name
- * @property {?string} title
- * @property {number} game_start
- * @property {string} game_start_js
- * @property {number} game_stop
- * @property {string} game_stop_js
- * @property {number} reward_success
- * @property {number} reward_conquest
- * @property {number} reward_rate
- * @property {?string} map
+ * @typedef {import('./common.js').Game2} Game
  */
 
 /**
- * @typedef Station
- * @type {object}
- * @property {number} id
- * @property {string} name
- * @property {number} capacity
- * @property {boolean} score_sign
- * @property {?number} score_base
- * @property {?number} score_high
+ * @typedef {import('./common.js').Station2} Station
  */
 
 /**
- * @typedef {import('./common.js').Team2} Team2
+ * @typedef {import('./common.js').Team2} Team
  */
 
 /**
- * @typedef {import('./common.js').Player2} Player2
+ * @typedef {import('./common.js').Player2} Player
  */
 
 /**
- * @typedef Attempt
- * @type {object}
- * @property {number} id
- * @property {number} station
- * @property {number} team
- * @property {number} score
- * @property {number} time
+ * @typedef {import('./common.js').Attempt} Attempt
  */
 
 /**
@@ -68,8 +43,8 @@ import { n, n_option_list2 } from './element.js';
  * @property {Game} game
  * @property {number} time
  * @property {Station[]} station_list
- * @property {Team2[]} team_list
- * @property {Player2[]} player_list
+ * @property {Team[]} team_list
+ * @property {Player[]} player_list
  * @property {Attempt[]} attempt_list
  */
 
@@ -78,10 +53,11 @@ import { n, n_option_list2 } from './element.js';
  * @type {object}
  * @property {Station} station
  * @property {string} code
- * @property {Map<number, Team2>} team_map
- * @property {Map<string, Player2>} player_map
+ * @property {Map<number, Team>} team_map
+ * @property {Map<number, Player>} player_map_by_id
+ * @property {Map<string, Player>} player_map_by_mark
  * @property {Attempt[]} attempt_list
- * @property {Player2[]} participant_list
+ * @property {Player[]} participant_list
  */
 
 /**
@@ -116,7 +92,8 @@ function login_result_to_state(form_data, result) {
 		station: home_state.station_map.get(parseInt(form_data.get('station'))),
 		code: form_data.get('code'),
 		team_map: new Map(result.team_list.map(team => [team.id, team])),
-		player_map: new Map(result.player_list.map(player => [player.mark, player])),
+		player_map_by_id: new Map(result.player_list.map(player => [player.id, player])),
+		player_map_by_mark: new Map(result.player_list.map(player => [player.mark, player])),
 		attempt_list: result.attempt_list,
 		participant_list: [],
 	};
@@ -320,6 +297,15 @@ function render() {
 								}),
 							],
 						}),
+						n({
+							class: 'p-0 col-12',
+							content: [
+								n({
+									class: 'm-1',
+									content: attempt.player_list.map(id => login_state.player_map_by_id.get(id).name).join(', '),
+								}),
+							],
+						}),
 					],
 				}),
 			],
@@ -417,7 +403,7 @@ player_form.addEventListener('submit', event => {
 	event.preventDefault();
 	const form_data = new FormData(player_form);
 	const mark = form_data.get('mark');
-	const player = login_state.player_map.get(mark) ?? null;
+	const player = login_state.player_map_by_mark.get(mark) ?? null;
 	if (player === null) {
 		alert('Player not found.');
 		return;
