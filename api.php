@@ -1345,6 +1345,20 @@ if (is_post('attempt_delete')) {
 	]);
 }
 
+if (is_post('live')) {
+	$game = post_string('game');
+	$game = game_identify_by_name($game);
+	if (is_null($game))
+		json(NULL);
+	json([
+		'game' => game_select_by_id($game),
+		'polygon_list' => polygon_select_by_game($game),
+		'station_list' => station2_select_by_game($game),
+		'team_list' => team2_select_by_game($game),
+		'attempt_list' => attempt_select_by_game($game),
+	]);
+}
+
 if (is_get('station_list')) {
 	json([
 		'station_list' => station_list(),

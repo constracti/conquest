@@ -1,0 +1,36 @@
+#canvas #svg {
+	top: 0%;
+	left: 0%;
+}
+#canvas #svg polygon {
+	stroke-linejoin: round;
+	stroke-opacity: 75%;
+	stroke-width: 0.25px;
+	fill-opacity: 50%;
+}
+
+#canvas #heading-section {
+	position: absolute;
+	top: 0%;
+	left: 0%;
+}
+
+#canvas #score-section {
+	position: absolute;
+	top: 10%;
+	left: 0%;
+	height: 90%;
+	width: 20%;
+}
+
+#canvas #history-section {
+	position: absolute;
+	top: 10%;
+	left: calc(80% - 1.3%); /* TODO set in game table */
+	height: 90%;
+	width: 20%;
+}
+
+#canvas .list-group-item {
+	background-color: rgb(from var(--bs-list-group-bg) r g b / 50%);
+}
