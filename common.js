@@ -95,6 +95,22 @@ import { n } from './element.js';
  */
 
 /**
+ * @typedef Conqueror
+ * @type {object}
+ * @property {?number} team
+ * @property {?number} time
+ * @property {?number} record
+ */
+
+/**
+ * @typedef Conquest
+ * @type {object}
+ * @property {number} team
+ * @property {number} start
+ * @property {number} stop
+ */
+
+/**
  * @typedef Game
  * @type {object}
  * @property {number} time_start
@@ -191,6 +207,25 @@ export function human_duration(seconds) {
 }
 
 /**
+ * @param {?Conquest[]} conquest_list
+ * @param {Conqueror} conqueror
+ * @param {number} time
+ */
+export function conquest_push(conquest_list, conqueror, time) {
+	if (conquest_list === null)
+		return;
+	if (conqueror.team === null)
+		return;
+	if (conqueror.time === null)
+		return;
+	conquest_list.push({
+		team: conqueror.team,
+		start: conqueror.time,
+		stop: time,
+	});
+}
+
+/**
  * @param {?number} score 
  * @returns {number} 
  */
@@ -203,7 +238,7 @@ function negate(score) {
 /**
  * @param {?number} record
  * @param {number} score
- * @returns {?number}
+ * @returns {number}
  */
 function maximum(record, score) {
 	if (record === null)
@@ -217,41 +252,79 @@ function maximum(record, score) {
  * @param {?number} high
  * @param {number} score
  * @param {number} team
- * @param {{conqueror: ?number, record: ?number}} memory
+ * @param {number} time
+ * @param {Conqueror} conqueror
+ * @param {?Conquest[]} conquest_list
+ * @returns {string}
  */
-export function attempt_type(sign, base, high, score, team, memory) {
+export function attempt_type(sign, base, high, score, team, time, conqueror, conquest_list) {
+	if (conquest_list === undefined)
+		conquest_list = null;
 	if (sign) {
-		memory.record = negate(memory.record);
-		const type = attempt_type(!sign, negate(base), negate(high), negate(score), team, memory);
-		memory.record = negate(memory.record);
+		conqueror.record = negate(conqueror.record);
+		const type = attempt_type(!sign, negate(base), negate(high), negate(score), team, time, conqueror, conquest_list);
+		conqueror.record = negate(conqueror.record);
 		return type;
 	}
 	if (base !== null && score < base) {
-		memory.record = maximum(memory.record, score);
+		conqueror.record = maximum(conqueror.record, score);
 		return 'Failure';
 	}
-	if (team === memory.conqueror) {
-		memory.record = maximum(memory.record, score);
+	if (team === conqueror.team) {
+		conqueror.record = maximum(conqueror.record, score);
 		return 'Success';
 	}
 	if (high !== null && score >= high) {
-		memory.conqueror = team;
-		memory.record = maximum(memory.record, score);
+		conquest_push(conquest_list, conqueror, time);
+		conqueror.team = team;
+		conqueror.time = time;
+		conqueror.record = maximum(conqueror.record, score);
 		return 'Success and Conquest';
 	}
-	if (memory.record === null) {
-		memory.conqueror = team;
-		memory.record = score;
+	if (conqueror.record === null) {
+		conquest_push(conquest_list, conqueror, time);
+		conqueror.team = team;
+		conqueror.time = time;
+		conqueror.record = score;
 		return 'Success and Conquest';
 	}
-	if (score > memory.record) {
-		memory.conqueror = team;
-		memory.record = score;
+	if (score > conqueror.record) {
+		conquest_push(conquest_list, conqueror, time);
+		conqueror.team = team;
+		conqueror.time = time;
+		conqueror.record = score;
 		return 'Success and Conquest';
 	}
-	if (score === memory.record) {
-		memory.conqueror = null;
+	if (score === conqueror.record) {
+		conquest_push(conquest_list, conqueror, time);
+		conqueror.team = null;
+		conqueror.time = time;
 		return 'Success and Neutralization';
 	}
 	return 'Success';
 }
+
+/**
+ * 
+ * @param {Game2} game
+ * @param {number} current_timestamp
+ * @returns {number}
+ */
+export function score_success(game, current_timestamp) {
+	const current_value = 1 + game.reward_rate / 3600 * (current_timestamp - game.game_start);
+	return game.reward_success * current_value;
+}
+
+/**
+ * @param {Game2} game
+ * @param {number} start_timestamp
+ * @param {number} stop_timestamp
+ * @returns {number}
+ */
+export function score_conquest(game, start_timestamp, stop_timestamp) {
+	const duration = stop_timestamp - start_timestamp // seconds
+	const mean_timestamp = (start_timestamp + stop_timestamp) / 2 // seconds
+	const mean_value = 1 + game.reward_rate / 3600 * (mean_timestamp - game.game_start);
+	return game.reward_conquest / 60 * mean_value * duration;
+}
+
