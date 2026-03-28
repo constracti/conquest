@@ -22,6 +22,10 @@ import { n, n_option_list2 } from './element.js';
  */
 
 /**
+ * @typedef {import('./common.js').Conqueror} Conqueror
+ */
+
+/**
  * @typedef HomeResult
  * @type {object}
  * @property {Game} game
@@ -227,15 +231,16 @@ function render() {
 		attempt_form.classList.add('d-none');
 	attempt_list.innerHTML = '';
 	/**
-	 * @type {{conqueror: ?number, record: ?number}}
+	 * @type {Conqueror}
 	 */
-	const memory = {
-		conqueror: null,
+	const conqueror = {
+		team: null,
+		time: null,
 		record: null,
 	};
 	login_state.attempt_list.forEach(attempt => {
 		const team = login_state.team_map.get(attempt.team);
-		const type = attempt_type(station.score_sign, station.score_base, station.score_high, attempt.score, attempt.team, memory);
+		const type = attempt_type(station.score_sign, station.score_base, station.score_high, attempt.score, attempt.time, attempt.team, conqueror);
 		attempt_list.prepend(n({
 			class: 'list-group-item p-1',
 			content: [

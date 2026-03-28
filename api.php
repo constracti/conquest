@@ -1356,6 +1356,7 @@ if (is_post('live')) {
 		'station_list' => station2_select_by_game($game),
 		'team_list' => team2_select_by_game($game),
 		'attempt_list' => attempt_select_by_game($game),
+		'time' => DT::from_now()->to_int(),
 	]);
 }
 
