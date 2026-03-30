@@ -126,6 +126,8 @@ import { n } from './element.js';
 
 export const api = new API();
 
+export const app_name2 = 'The Station War';
+
 /**
  * 
  * @param {string} title
@@ -203,7 +205,7 @@ export function human_duration(seconds) {
 	seconds -= minutes * 60;
 	let hours = Math.floor(minutes / 60);
 	minutes -= hours * 60;
-	return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+	return `${sign}${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 /**

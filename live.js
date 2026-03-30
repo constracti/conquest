@@ -1,4 +1,4 @@
-import { api, attempt_type, conquest_push, human_duration, score_conquest, score_success, team2_badge } from './common.js';
+import { api, app_name2, attempt_type, conquest_push, human_duration, score_conquest, score_success, team2_badge } from './common.js';
 import { n } from './element.js';
 
 /**
@@ -36,7 +36,7 @@ import { n } from './element.js';
  */
 
 /**
- * @typedef State
+ * @typedef Result
  * @type {object}
  * @property {Game} game
  * @property {Polygon[]} polygon_list
@@ -47,37 +47,25 @@ import { n } from './element.js';
  */
 
 /**
+ * @typedef State
+ * @type {object}
+ * @property {Game} game
+ * @property {Polygon[]} polygon_list
+ * @property {Station[]} station_list
+ * @property {Team[]} team_list
+ * @property {Attempt[]} attempt_list
+ * @property {number} time
+ * @property {number} time_offset
+ */
+
+/**
  * @type {?State}
  */
-let state = await (async () => {
-	const search_params = new URLSearchParams(location.search);
-	const game = search_params.get('game');
-	if (game === null)
-		return null;
-	const form_data = new FormData();
-	form_data.append('game', game);
-	return await api.post('live', form_data);
-})();
+let state = null;
 
 // TODO define common routines in common.js
 
-if (state === null) {
-	const error = new Error('Invalid game parameter in url.');
-	console.error(error.message);
-	alert(error.message);
-	throw error;
-}
-
-((title) => {
-	document.title = title;
-	Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
-		h1.innerHTML = title;
-	});
-})(state.game.title ?? 'The Station War');
-
 // TODO responsive
-// TODO time remaining
-// TODO auto-update
 // TODO conqueror popup
 
 /**
@@ -98,6 +86,16 @@ const svg = document.getElementById('svg'); // TODO stroke does not scale unifor
 /**
  * @type {HTMLDivElement}
  */
+const spinner_div = document.getElementById('spinner-div');
+
+/**
+ * @type {HTMLDivElement}
+ */
+const timer_div = document.getElementById('timer-div');
+
+/**
+ * @type {HTMLDivElement}
+ */
 const score_list = document.getElementById('score-list');
 
 /**
@@ -106,6 +104,16 @@ const score_list = document.getElementById('score-list');
 const history_list = document.getElementById('history-list');
 
 function render() {
+	if (state === null)
+		return;
+	// title
+	((title) => {
+		document.title = title;
+		Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
+			h1.innerHTML = title;
+		});
+	})(state.game.title ?? app_name2);
+	// map
 	if (state.game.map !== null) {
 		canvas.classList.remove('ratio', 'ratio-1x1');
 		map_img.src = state.game.map;
@@ -113,6 +121,7 @@ function render() {
 		canvas.classList.add('ratio', 'ratio-1x1');
 		map_img.src = '';
 	}
+	// run
 	const polygon_map = new Map(state.polygon_list.map(polygon => [polygon.id, polygon]));
 	const station_map = new Map(state.station_list.map(station => [station.id, station]));
 	const team_map = new Map(state.team_list.map(team => [team.id, team]));
@@ -160,6 +169,7 @@ function render() {
 			score_map_by_team.set(team.id, score_map_by_team.get(team.id) / team.players);
 	});
 	const score_max = Math.max(1, ...score_map_by_team.values());
+	// svg
 	svg.innerHTML = '';
 	svg.append(...state.station_list.map(station => {
 		if (station.polygon === null)
@@ -185,6 +195,7 @@ function render() {
 		});
 		return svg_polygon;
 	}).filter(svg_polygon => svg_polygon !== null));
+	// score
 	score_list.innerHTML = '';
 	score_list.append(...state.team_list.toSorted((lhs, rhs) => score_map_by_team.get(lhs.id) - score_map_by_team.get(rhs.id)).toReversed().map(team => {
 		const score = score_map_by_team.get(team.id);
@@ -216,6 +227,7 @@ function render() {
 			],
 		});
 	}));
+	// history
 	history_list.innerHTML = '';
 	state.attempt_list.toSorted((lhs, rhs) => lhs.time - rhs.time).toReversed().forEach(attempt => {
 		const type = type_map_by_attempt.get(attempt.id);
@@ -259,4 +271,59 @@ function render() {
 	});
 }
 
-render();
+function exit() {
+	const error = new Error('Invalid game parameter in url.');
+	console.error(error.message);
+	alert(error.message);
+	throw error;
+}
+
+async function server_loop() {
+	if (!spinner_div.classList.contains('d-none'))
+		return;
+	spinner_div.classList.remove('d-none');
+	const search_params = new URLSearchParams(location.search);
+	const game = search_params.get('game');
+	if (game === null) {
+		state = null;
+		exit();
+	}
+	const form_data = new FormData();
+	form_data.append('game', game);
+	/**
+	 * @type {?Result}
+	 */
+	const result = await api.post('live', form_data);
+	if (result === null) {
+		state = null;
+		exit();
+	}
+	spinner_div.classList.add('d-none');
+	state = {
+		game: result.game,
+		polygon_list: result.polygon_list,
+		station_list: result.station_list,
+		team_list: result.team_list,
+		attempt_list: result.attempt_list,
+		time: result.time,
+		time_offset: result.time - Date.now() / 1000,
+	};
+	render();
+}
+setInterval(server_loop, 10000);
+server_loop();
+
+function timer_loop() {
+	if (state === null)
+		return;
+	const time = state.time_offset + Date.now() / 1000;
+	if (time < state.game.game_start)
+		timer_div.innerHTML = `Game start: ${human_duration(state.game.game_start - time)}`;
+	else if (time < state.game.game_stop)
+		timer_div.innerHTML = `Game stop: ${human_duration(state.game.game_stop - time)}`;
+	else
+		timer_div.innerHTML = 'Game over.';
+	timer_div.classList.remove('d-none');
+}
+setInterval(timer_loop, 1000);
+timer_loop();
