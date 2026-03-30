@@ -14,7 +14,13 @@ import { n } from './element.js';
  */
 
 /**
- * @typedef {import('./common.js').Team2} Team
+ * @typedef Team
+ * @type {object}
+ * @property {number} id
+ * @property {string} name
+ * @property {string} background_color
+ * @property {string} text_color
+ * @property {number} players
  */
 
 /**
@@ -148,7 +154,11 @@ function render() {
 	conquest_list.forEach(conquest => {
 		score_map_by_team.set(conquest.team, score_map_by_team.get(conquest.team) + score_conquest(state.game, conquest.start, conquest.stop));
 	});
-	// TODO normalize score
+	// normalize score
+	state.team_list.forEach(team => {
+		if (team.players > 0)
+			score_map_by_team.set(team.id, score_map_by_team.get(team.id) / team.players);
+	});
 	const score_max = Math.max(1, ...score_map_by_team.values());
 	svg.innerHTML = '';
 	svg.append(...state.station_list.map(station => {

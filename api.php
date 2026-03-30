@@ -383,6 +383,20 @@ function team2_select_by_game(int $game): array {
 	return stmt_list($stmt);
 }
 
+function team2_select_by_game_with_players(int $game): array {
+	global $db;
+	$stmt = $db->prepare('
+	SELECT `team2`.`id`, `team2`.`name`, `team2`.`background_color`, `team2`.`text_color`, COUNT(`player2`.`id`) AS `players`
+	FROM `team2`
+	LEFT JOIN `player2` ON `player2`.`team` = `team2`.`id`
+	WHERE `team2`.`game` = ?
+	GROUP BY `team2`.`id`
+	ORDER BY `team2`.`name` ASC, `team2`.`id` ASC
+	');
+	$stmt->bind_param('i', $game);
+	return stmt_list($stmt);
+}
+
 function team2_belongs_to_game(int $id, int $game): bool {
 	global $db;
 	$stmt = $db->prepare('SELECT `id` FROM `team2` WHERE `id` = ? AND `game` = ?');
@@ -1354,7 +1368,7 @@ if (is_post('live')) {
 		'game' => game_select_by_id($game),
 		'polygon_list' => polygon_select_by_game($game),
 		'station_list' => station2_select_by_game($game),
-		'team_list' => team2_select_by_game($game),
+		'team_list' => team2_select_by_game_with_players($game),
 		'attempt_list' => attempt_select_by_game($game),
 		'time' => DT::from_now()->to_int(),
 	]);
