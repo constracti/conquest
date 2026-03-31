@@ -522,7 +522,7 @@ function player2_truncate(int $game): void {
 
 function attempt_select_by_game(int $game): array {
 	global $db;
-	$stmt = $db->prepare('SELECT `id`, `station`, `team`, `score`, `time` FROM `attempt` WHERE `game` = ? ORDER BY `id` ASC');
+	$stmt = $db->prepare('SELECT `id`, `station`, `team`, `score`, `time` FROM `attempt` WHERE `game` = ? ORDER BY `time` ASC, `id` ASC');
 	$stmt->bind_param('i', $game);
 	$attempt_list = stmt_list($stmt);
 	$attempt_list = array_map(function(array $item): array {
