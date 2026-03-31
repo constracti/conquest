@@ -1,8 +1,8 @@
-import { api, app_name2, human_duration, run, score_conquest, score_success, team2_badge } from './common.js';
+import { api, app_name, human_duration, run, score_conquest, score_success, team_badge } from './common.js';
 import { n } from './element.js';
 
 /**
- * @typedef {import('./common.js').Game2} Game
+ * @typedef {import('./common.js').Game} Game
  */
 
 /**
@@ -10,7 +10,7 @@ import { n } from './element.js';
  */
 
 /**
- * @typedef {import('./common.js').Station2} Station
+ * @typedef {import('./common.js').Station} Station
  */
 
 /**
@@ -120,7 +120,7 @@ function render() {
 		Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
 			h1.innerHTML = title;
 		});
-	})(state.game.title ?? app_name2);
+	})(state.game.title ?? app_name);
 	// map
 	if (state.game.map !== null) {
 		canvas.classList.remove('map-null');
@@ -202,7 +202,7 @@ function render() {
 				n({
 					class: 'd-flex flex-row flex-wrap align-items-center',
 					content: [
-						team2_badge(team),
+						team_badge(team),
 						n({
 							class: 'm-1 flex-grow-1 text-end',
 							content: score.toFixed(),
@@ -246,7 +246,7 @@ function render() {
 						n({
 							class: 'flex-grow-1 text-end',
 							content: [
-								team2_badge(team),
+								team_badge(team),
 							],
 						}),
 					],
@@ -272,7 +272,7 @@ function station_render() {
 				class: 'm-1',
 				content: station.name,
 			}),
-			team !== null ? team2_badge(team) : null,
+			team !== null ? team_badge(team) : null,
 			n({
 				tag: 'button',
 				class: 'btn-close m-1',

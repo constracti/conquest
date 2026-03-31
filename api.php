@@ -99,48 +99,6 @@ function move_file(string $temp_path, string $upload_dir, string $file_name): st
 	return $file_path;
 }
 
-// config
-
-function config_get(string $name, mixed $default): mixed {
-	global $db;
-	$stmt = $db->prepare('SELECT `value` FROM `config` WHERE `name` = ?');
-	$stmt->bind_param('s', $name);
-	$value = stmt_cell($stmt);
-	if (is_null($value))
-		return NULL;
-	return unserialize($value);
-}
-
-function config_get_game_start(): DT {
-	$game_start = config_get('game_start', 0);
-	return DT::from_int($game_start);
-}
-
-function config_get_game_stop(): DT {
-	$game_stop = config_get('game_stop', 0);
-	return DT::from_int($game_stop);
-}
-
-function config_get_reward_success(): int {
-	return config_get('reward_success', 1);
-}
-
-function config_get_reward_conquest(): int {
-	return config_get('reward_conquest', 1);
-}
-
-function config_get_reward_rate(): float {
-	return config_get('reward_rate', 0.);
-}
-
-function get_game_state(DT $now, DT $game_start, DT $game_stop): string {
-	if ($now->dt < $game_start->dt)
-		return 'pending';
-	if ($now->dt >= $game_stop->dt)
-		return 'finished';
-	return 'running';
-}
-
 // game
 
 function game_select_by_id(int $id): ?array {
@@ -260,7 +218,7 @@ function polygon_belongs_to_game(int $id, int $game): bool {
 
 function polygon_count_stations(int $id): int {
 	global $db;
-	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `station2` WHERE `polygon` = ?');
+	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `station` WHERE `polygon` = ?');
 	$stmt->bind_param('i', $id);
 	return stmt_cell($stmt);
 }
@@ -289,61 +247,61 @@ function polygon_delete(int $id): void {
 	$stmt->close();
 }
 
-// station2
+// station
 
-function station2_select_by_game(int $game, bool $sensitive = FALSE): array {
+function station_select_by_game(int $game, bool $sensitive = FALSE): array {
 	global $db;
 	$stmt = $db->prepare('
 	SELECT `id`, `name`, IF(?, `code`, \'\') AS `code`, `polygon`, `capacity`, `score_sign`, `score_base`, `score_high`
-	FROM `station2`
+	FROM `station`
 	WHERE `game` = ? ORDER BY `name` ASC, `id` ASC
 	');
 	$stmt->bind_param('ii', $sensitive, $game);
 	return stmt_list($stmt);
 }
 
-function station2_belongs_to_game(int $id, int $game): bool {
+function station_belongs_to_game(int $id, int $game): bool {
 	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `station2` WHERE `id` = ? AND `game` = ?');
+	$stmt = $db->prepare('SELECT `id` FROM `station` WHERE `id` = ? AND `game` = ?');
 	$stmt->bind_param('ii', $id, $game);
 	return stmt_bool($stmt);
 }
 
-function station2_matches(int $id, string $code): bool {
+function station_matches(int $id, string $code): bool {
 	global $db;
 	$stmt = $db->prepare('SELECT `id` FROM `station` WHERE `id` = ? AND `code` = ?');
 	$stmt->bind_param('is', $id, $code);
 	return stmt_bool($stmt);
 }
 
-function station2_identify_by_polygon(int $polygon): ?int {
+function station_identify_by_polygon(int $polygon): ?int {
 	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `station2` WHERE `polygon` = ? LIMIT 1');
+	$stmt = $db->prepare('SELECT `id` FROM `station` WHERE `polygon` = ? LIMIT 1');
 	$stmt->bind_param('i', $polygon);
 	return stmt_cell($stmt);
 }
 
-function station2_get_capacity(int $id): ?int {
+function station_get_capacity(int $id): ?int {
 	global $db;
-	$stmt = $db->prepare('SELECT `capacity` FROM `station2` WHERE `id` = ?');
+	$stmt = $db->prepare('SELECT `capacity` FROM `station` WHERE `id` = ?');
 	$stmt->bind_param('i', $id);
 	return stmt_cell($stmt);
 }
 
-function station2_count_attempts(int $id): int {
+function station_count_attempts(int $id): int {
 	global $db;
 	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `attempt` WHERE `station` = ?');
 	$stmt->bind_param('i', $id);
 	return stmt_cell($stmt);
 }
 
-function station2_insert(
+function station_insert(
 	string $name, string $code, ?int $polygon,
 	int $capacity, bool $score_sign, ?int $score_base, ?int $score_high, int $game,
 ): void {
 	global $db;
 	$stmt = $db->prepare('
-	INSERT INTO `station2` (`name`, `code`, `polygon`, `capacity`, `score_sign`, `score_base`, `score_high`, `game`)
+	INSERT INTO `station` (`name`, `code`, `polygon`, `capacity`, `score_sign`, `score_base`, `score_high`, `game`)
 	VALUES (?, ?, ?, ?, ?)
 	');
 	$stmt->bind_param('ssiiiiii', $name, $code, $polygon, $capacity, $score_sign, $score_base, $score_high, $game);
@@ -351,13 +309,13 @@ function station2_insert(
 	$stmt->close();
 }
 
-function station2_update(
+function station_update(
 	int $id, string $name, string $code, ?int $polygon,
 	int $capacity, bool $score_sign, ?int $score_base, ?int $score_high,
 ): void {
 	global $db;
 	$stmt = $db->prepare('
-	UPDATE `station2`
+	UPDATE `station`
 	SET `name` = ?, `code` = ?, `polygon` = ?, `capacity` = ?, `score_sign` = ?, `score_base` = ?, `score_high` = ?
 	WHERE `id` = ?
 	');
@@ -366,153 +324,153 @@ function station2_update(
 	$stmt->close();
 }
 
-function station2_delete(int $id): void {
+function station_delete(int $id): void {
 	global $db;
-	$stmt = $db->prepare('DELETE FROM `station2` WHERE `id` = ?');
+	$stmt = $db->prepare('DELETE FROM `station` WHERE `id` = ?');
 	$stmt->bind_param('i', $id);
 	$stmt->execute();
 	$stmt->close();
 }
 
-// team2
+// team
 
-function team2_select_by_game(int $game): array {
+function team_select_by_game(int $game): array {
 	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name`, `background_color`, `text_color` FROM `team2` WHERE `game` = ? ORDER BY `name` ASC, `id` ASC');
+	$stmt = $db->prepare('SELECT `id`, `name`, `background_color`, `text_color` FROM `team` WHERE `game` = ? ORDER BY `name` ASC, `id` ASC');
 	$stmt->bind_param('i', $game);
 	return stmt_list($stmt);
 }
 
-function team2_select_by_game_with_players(int $game): array {
+function team_select_by_game_with_players(int $game): array {
 	global $db;
 	$stmt = $db->prepare('
-	SELECT `team2`.`id`, `team2`.`name`, `team2`.`background_color`, `team2`.`text_color`, COUNT(`player2`.`id`) AS `players`
-	FROM `team2`
-	LEFT JOIN `player2` ON `player2`.`team` = `team2`.`id`
-	WHERE `team2`.`game` = ?
-	GROUP BY `team2`.`id`
-	ORDER BY `team2`.`name` ASC, `team2`.`id` ASC
+	SELECT `team`.`id`, `team`.`name`, `team`.`background_color`, `team`.`text_color`, COUNT(`player`.`id`) AS `players`
+	FROM `team`
+	LEFT JOIN `player` ON `player`.`team` = `team`.`id`
+	WHERE `team`.`game` = ?
+	GROUP BY `team`.`id`
+	ORDER BY `team`.`name` ASC, `team`.`id` ASC
 	');
 	$stmt->bind_param('i', $game);
 	return stmt_list($stmt);
 }
 
-function team2_belongs_to_game(int $id, int $game): bool {
+function team_belongs_to_game(int $id, int $game): bool {
 	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `team2` WHERE `id` = ? AND `game` = ?');
+	$stmt = $db->prepare('SELECT `id` FROM `team` WHERE `id` = ? AND `game` = ?');
 	$stmt->bind_param('ii', $id, $game);
 	return stmt_bool($stmt);
 }
 
-function team2_identify_by_name(string $name, int $game): ?int {
+function team_identify_by_name(string $name, int $game): ?int {
 	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `team2` WHERE `name` = ? AND `game` = ? LIMIT 1');
+	$stmt = $db->prepare('SELECT `id` FROM `team` WHERE `name` = ? AND `game` = ? LIMIT 1');
 	$stmt->bind_param('si', $name, $game);
 	return stmt_cell($stmt);
 }
 
-function team2_count_players(int $id): int {
+function team_count_players(int $id): int {
 	global $db;
-	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `player2` WHERE `team` = ?');
+	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `player` WHERE `team` = ?');
 	$stmt->bind_param('i', $id);
 	return stmt_cell($stmt);
 }
 
-function team2_count_attempts(int $id): int {
+function team_count_attempts(int $id): int {
 	global $db;
 	$stmt = $db->prepare('SELECT COUNT(`id`) FROM `attempt` WHERE `team` = ?');
 	$stmt->bind_param('i', $id);
 	return stmt_cell($stmt);
 }
 
-function team2_insert(string $name, string $background_color, string $text_color, int $game): void {
+function team_insert(string $name, string $background_color, string $text_color, int $game): void {
 	global $db;
-	$stmt = $db->prepare('INSERT INTO `team2` (`name`, `background_color`, `text_color`, `game`) VALUES (?, ?, ?, ?)');
+	$stmt = $db->prepare('INSERT INTO `team` (`name`, `background_color`, `text_color`, `game`) VALUES (?, ?, ?, ?)');
 	$stmt->bind_param('sssi', $name, $background_color, $text_color, $game);
 	$stmt->execute();
 	$stmt->close();
 }
 
-function team2_update(int $id, string $name, string $background_color, string $text_color): void {
+function team_update(int $id, string $name, string $background_color, string $text_color): void {
 	global $db;
-	$stmt = $db->prepare('UPDATE `team2` SET `name` = ?, `background_color` = ?, `text_color` = ? WHERE `id` = ?');
+	$stmt = $db->prepare('UPDATE `team` SET `name` = ?, `background_color` = ?, `text_color` = ? WHERE `id` = ?');
 	$stmt->bind_param('sssi', $name, $background_color, $text_color, $id);
 	$stmt->execute();
 	$stmt->close();
 }
 
-function team2_delete(int $id): void {
+function team_delete(int $id): void {
 	global $db;
-	$stmt = $db->prepare('DELETE FROM `team2` WHERE `id` = ?');
+	$stmt = $db->prepare('DELETE FROM `team` WHERE `id` = ?');
 	$stmt->bind_param('i', $id);
 	$stmt->execute();
 	$stmt->close();
 }
 
-// player2
+// player
 
-function player2_select_by_game(int $game): array {
+function player_select_by_game(int $game): array {
 	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name`, `mark`, `team` FROM `player2` WHERE `game` = ? ORDER BY `name` ASC, `id` ASC');
+	$stmt = $db->prepare('SELECT `id`, `name`, `mark`, `team` FROM `player` WHERE `game` = ? ORDER BY `name` ASC, `id` ASC');
 	$stmt->bind_param('i', $game);
 	return stmt_list($stmt);
 }
 
-function player2_belongs_to_game(int $id, int $game): bool {
+function player_belongs_to_game(int $id, int $game): bool {
 	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `player2` WHERE `id` = ? AND `game` = ?');
+	$stmt = $db->prepare('SELECT `id` FROM `player` WHERE `id` = ? AND `game` = ?');
 	$stmt->bind_param('ii', $id, $game);
 	return stmt_bool($stmt);
 }
 
-function player2_identify_by_mark(string $mark, int $game): ?int {
+function player_identify_by_mark(string $mark, int $game): ?int {
 	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `player2` WHERE `mark` = ? AND `game` = ? LIMIT 1');
+	$stmt = $db->prepare('SELECT `id` FROM `player` WHERE `mark` = ? AND `game` = ? LIMIT 1');
 	$stmt->bind_param('si', $mark, $game);
 	return stmt_cell($stmt);
 }
 
-function player2_get_team(int $id): ?int {
+function player_get_team(int $id): ?int {
 	global $db;
-	$stmt = $db->prepare('SELECT `team` FROM `player2` WHERE `id` = ?');
+	$stmt = $db->prepare('SELECT `team` FROM `player` WHERE `id` = ?');
 	$stmt->bind_param('i', $id);
 	return stmt_cell($stmt);
 }
 
-function player2_count_attempts(int $id): int {
+function player_count_attempts(int $id): int {
 	global $db;
 	$stmt = $db->prepare('SELECT COUNT(`attempt`) FROM `participant` WHERE `player` = ?');
 	$stmt->bind_param('i', $id);
 	return stmt_cell($stmt);
 }
 
-function player2_insert(string $name, string $mark, int $team, int $game): void {
+function player_insert(string $name, string $mark, int $team, int $game): void {
 	global $db;
-	$stmt = $db->prepare('INSERT INTO `player2` (`name`, `mark`, `team`, `game`) VALUES (?, ?, ?, ?)');
+	$stmt = $db->prepare('INSERT INTO `player` (`name`, `mark`, `team`, `game`) VALUES (?, ?, ?, ?)');
 	$stmt->bind_param('ssii', $name, $mark, $team, $game);
 	$stmt->execute();
 	$stmt->close();
 }
 
-function player2_update(int $id, string $name, string $mark, int $team): void {
+function player_update(int $id, string $name, string $mark, int $team): void {
 	global $db;
-	$stmt = $db->prepare('UPDATE `player2` SET `name` = ?, `mark` = ?, `team` = ? WHERE `id` = ?');
+	$stmt = $db->prepare('UPDATE `player` SET `name` = ?, `mark` = ?, `team` = ? WHERE `id` = ?');
 	$stmt->bind_param('ssii', $name, $mark, $team, $id);
 	$stmt->execute();
 	$stmt->close();
 }
 
-function player2_delete(int $id): void {
+function player_delete(int $id): void {
 	global $db;
-	$stmt = $db->prepare('DELETE FROM `player2` WHERE `id` = ?');
+	$stmt = $db->prepare('DELETE FROM `player` WHERE `id` = ?');
 	$stmt->bind_param('i', $id);
 	$stmt->execute();
 	$stmt->close();
 }
 
-function player2_truncate(int $game): void {
+function player_truncate(int $game): void {
 	global $db;
-	$stmt = $db->prepare('DELETE FROM `player2` WHERE `game` = ?');
+	$stmt = $db->prepare('DELETE FROM `player` WHERE `game` = ?');
 	$stmt->bind_param('i', $game);
 	$stmt->execute();
 	$stmt->close();
@@ -620,229 +578,6 @@ function participant_insert(int $attempt, int $player, int $game): void {
 	$stmt->close();
 }
 
-// place
-
-function place_list(): array {
-	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name` FROM `place` ORDER BY `name` ASC, `id` ASC');
-	return stmt_list($stmt);
-}
-
-function place_with_content_list(): array {
-	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name`, `content`, `top`, `left`, `width` FROM `place`');
-	return stmt_list($stmt);
-}
-
-function place_station(int $place): ?int {
-	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `station` WHERE `place` = ? ORDER BY `id` LIMIT 1');
-	$stmt->bind_param('i', $place);
-	return stmt_cell($stmt);
-}
-
-// station
-
-function station_list(): array {
-	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name`, `capacity`, `place` FROM `station` ORDER BY `name` ASC, `id` ASC');
-	return stmt_list($stmt);
-}
-
-function station_with_code_list(): array {
-	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name`, `code`, `capacity`, `place` FROM `station` ORDER BY `name` ASC, `id` ASC');
-	return stmt_list($stmt);
-}
-
-function station_exists(int $id): bool {
-	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `station` WHERE `id` = ?');
-	$stmt->bind_param('i', $id);
-	return stmt_bool($stmt);
-}
-
-function station_matches(int $id, string $code): bool {
-	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `station` WHERE `id` = ? AND `code` = ?');
-	$stmt->bind_param('is', $id, $code);
-	return stmt_bool($stmt);
-}
-
-function station_conqueror(int $station, DT $game_start, DT $game_stop): ?int {
-	global $db;
-	$game_start = $game_start->to_sql();
-	$game_stop = $game_stop->to_sql();
-	$stmt = $db->prepare('
-	SELECT IF(`success`.`type` = \'conquest\', `player`.`team`, NULL)
-	FROM `success`
-	LEFT JOIN `player` ON `player`.`id` = `success`.`player`
-	WHERE `success`.`station` = ? AND `success`.`dt` >= ? AND `success`.`dt` < ? AND `success`.`type` != \'simple\'
-	ORDER BY `success`.`dt` DESC, `success`.`id` DESC
-	LIMIT 1
-	');
-	$stmt->bind_param('iss', $station, $game_start, $game_stop);
-	return stmt_cell($stmt);
-}
-
-// team
-
-function team_list(): array {
-	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name`, `color` FROM `team` ORDER BY `name` ASC, `id` ASC');
-	return stmt_list($stmt);
-}
-
-function team_with_players_list(): array {
-	global $db;
-	$stmt = $db->prepare('
-	SELECT `team`.`id`, `team`.`name`, `team`.`color`, COUNT(`player`.`id`) AS `players`
-	FROM `team`
-	LEFT JOIN `player` ON `player`.`team` = `team`.`id`
-	GROUP BY `team`.`id`, `team`.`name`
-	ORDER BY `team`.`name` ASC, `team`.`id` ASC
-	');
-	return stmt_list($stmt);
-}
-
-function team_exists(int $id): bool {
-	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `team` WHERE `id` = ?');
-	$stmt->bind_param('i', $id);
-	return stmt_bool($stmt);
-}
-
-function team_players(int $id): ?int {
-	global $db;
-	$stmt = $db->prepare('SELECT COUNT(`id`) AS `players` FROM `player` WHERE `team` = ?');
-	$stmt->bind_param('i', $id);
-	return stmt_cell($stmt);
-}
-
-// player
-
-function player_list(): array {
-	global $db;
-	$stmt = $db->prepare('SELECT `id`, `name`, `team`, `block` FROM `player` ORDER BY `name` ASC, `id` ASC');
-	return array_map(function(array $item): array {
-		$item['block'] = boolval($item['block']);
-		return $item;
-	}, stmt_list($stmt));
-}
-
-function player_exists(string $id): bool {
-	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `player` WHERE `id` = ?');
-	$stmt->bind_param('s', $id);
-	return stmt_bool($stmt);
-}
-
-function player_points(DT $game_start, DT $game_stop): array {
-	global $db;
-	$game_start = $game_start->to_sql();
-	$game_stop = $game_stop->to_sql();
-	$stmt = $db->prepare('
-	SELECT `player`.`id`, `player`.`name`, `player`.`team`, COUNT(`success`.`id`) AS `points`
-	FROM `player`
-	LEFT JOIN `success` ON `success`.`player` = `player`.`id` AND `success`.`dt` >= ? AND `success`.`dt` < ?
-	WHERE NOT `player`.`block`
-	GROUP BY `player`.`id`, `player`.`name`, `player`.`team`
-	ORDER BY `player`.`name` ASC, `player`.`id` ASC');
-	$stmt->bind_param('ss', $game_start, $game_stop);
-	return stmt_list($stmt);
-}
-
-function player_team(string $id): int {
-	global $db;
-	$stmt = $db->prepare('SELECT `team` FROM `player` WHERE `id` = ?');
-	$stmt->bind_param('s', $id);
-	return stmt_cell($stmt);
-}
-
-// success
-
-function success_list(DT $game_start, DT $game_stop): array {
-	global $db;
-	$game_start = $game_start->to_sql();
-	$game_stop = $game_stop->to_sql();
-	$stmt = $db->prepare('
-	SELECT `id`, `station`, `player`, `type`, `dt` AS `timestamp`
-	FROM `success`
-	WHERE `dt` >= ? AND `dt` < ?
-	ORDER BY `dt` ASC, `id` ASC
-	');
-	$stmt->bind_param('ss', $game_start, $game_stop);
-	$list = stmt_list($stmt);
-	return array_map(function(array $item): array {
-		$item['timestamp'] = DT::from_sql($item['timestamp'])->to_int();
-		return $item;
-	}, $list);
-}
-
-function success_with_team_list(DT $game_start, DT $game_stop): array {
-	global $db;
-	$game_start = $game_start->to_sql();
-	$game_stop = $game_stop->to_sql();
-	$stmt = $db->prepare('
-	SELECT `success`.`id`, `success`.`station`, `player`.`team`, `success`.`type`, `success`.`dt` AS `timestamp`
-	FROM `success`
-	LEFT JOIN `player` ON `player`.`id` = `success`.`player`
-	WHERE `success`.`dt` >= ? AND `success`.`dt` < ?
-	ORDER BY `timestamp` ASC, `success`.`id` ASC
-	');
-	$stmt->bind_param('ss', $game_start, $game_stop);
-	$list = stmt_list($stmt);
-	return array_map(function(array $item): array {
-		$item['timestamp'] = DT::from_sql($item['timestamp'])->to_int();
-		return $item;
-	}, $list);
-}
-
-function success_list_by_station(int $station, DT $game_start, DT $game_stop): array {
-	global $db;
-	$game_start = $game_start->to_sql();
-	$game_stop = $game_stop->to_sql();
-	$stmt = $db->prepare('
-	SELECT `id`, `player`, `type`, `dt` AS `timestamp`
-	FROM `success`
-	WHERE `station` = ? AND `dt` >= ? AND `dt` < ?
-	ORDER BY `timestamp` ASC, `id` ASC
-	');
-	$stmt->bind_param('iss', $station, $game_start, $game_stop);
-	return stmt_list($stmt);
-}
-
-function success_latest(int $station): ?int {
-	global $db;
-	$stmt = $db->prepare('SELECT `id` FROM `success` WHERE `station` = ? ORDER BY `dt` DESC, `id` DESC LIMIT 1');
-	$stmt->bind_param('i', $station);
-	return stmt_cell($stmt);
-}
-
-function success_insert(int $station, string $player, string $type, DT $dt): void {
-	global $db;
-	$dt = $dt->to_sql();
-	$stmt = $db->prepare('INSERT INTO `success` (`station`, `player`, `type`, `dt`) VALUES (?, ?, ?, ?)');
-	$stmt->bind_param('isss', $station, $player, $type, $dt);
-	$stmt->execute();
-	$stmt->close();
-}
-
-function success_delete(int $id): void {
-	global $db;
-	$stmt = $db->prepare('DELETE FROM `success` WHERE `id` = ?');
-	$stmt->bind_param('i', $id);
-	$stmt->execute();
-	$stmt->close();
-}
-
-function success_truncate(): void {
-	global $db;
-	$stmt = $db->prepare('TRUNCATE `success`');
-	$stmt->execute();
-	$stmt->close();
-}
-
 // api
 
 function json(mixed $mixed): void {
@@ -883,9 +618,9 @@ if (is_post('game_register')) {
 	json([
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
-		'station_list' => station2_select_by_game($id, TRUE),
-		'team_list' => team2_select_by_game($id),
-		'player_list' => player2_select_by_game($id),
+		'station_list' => station_select_by_game($id, TRUE),
+		'team_list' => team_select_by_game($id),
+		'player_list' => player_select_by_game($id),
 		'attempt_list' => attempt_select_by_game($id),
 	]);
 }
@@ -901,9 +636,9 @@ if (is_post('game_login')) {
 	json([
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
-		'station_list' => station2_select_by_game($id, TRUE),
-		'team_list' => team2_select_by_game($id),
-		'player_list' => player2_select_by_game($id),
+		'station_list' => station_select_by_game($id, TRUE),
+		'team_list' => team_select_by_game($id),
+		'player_list' => player_select_by_game($id),
 		'attempt_list' => attempt_select_by_game($id),
 	]);
 }
@@ -1002,7 +737,7 @@ if (is_post('polygon_delete')) {
 	json(polygon_select_by_game($game));
 }
 
-if (is_post('station2_insert')) {
+if (is_post('station_insert')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
@@ -1013,7 +748,7 @@ if (is_post('station2_insert')) {
 	if (!is_null($polygon)) {
 		if (!polygon_belongs_to_game($polygon, $game))
 			exit('polygon');
-		if (!is_null(station2_identify_by_polygon($polygon)))
+		if (!is_null(station_identify_by_polygon($polygon)))
 			exit('polygon');
 	}
 	$capacity = post_int('capacity');
@@ -1022,17 +757,17 @@ if (is_post('station2_insert')) {
 	$score_sign = post_int('score_sign') > 0;
 	$score_base = post_int_nullable('score_base');
 	$score_high = post_int_nullable('score_high');
-	station2_insert($name, $code, $polygon, $capacity, $score_sign, $score_base, $score_high, $game);
-	json(station2_select_by_game($game, TRUE));
+	station_insert($name, $code, $polygon, $capacity, $score_sign, $score_base, $score_high, $game);
+	json(station_select_by_game($game, TRUE));
 }
 
-if (is_post('station2_update')) {
+if (is_post('station_update')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
 		exit('password');
 	$id = post_int('id');
-	if (!station2_belongs_to_game($id, $game))
+	if (!station_belongs_to_game($id, $game))
 		exit('id');
 	$name = post_string('name');
 	$code = post_string('code');
@@ -1040,7 +775,7 @@ if (is_post('station2_update')) {
 	if (!is_null($polygon)) {
 		if (!polygon_belongs_to_game($polygon, $game))
 			exit('polygon');
-		$station = station2_identify_by_polygon($polygon);
+		$station = station_identify_by_polygon($polygon);
 		if (!is_null($station) && $station !== $id)
 			exit('polygon');
 	}
@@ -1050,123 +785,123 @@ if (is_post('station2_update')) {
 	$score_sign = post_int('score_sign') > 0;
 	$score_base = post_int_nullable('score_base');
 	$score_high = post_int_nullable('score_high');
-	station2_update($id, $name, $code, $polygon, $capacity, $score_sign, $score_base, $score_high);
-	json(station2_select_by_game($game, TRUE));
+	station_update($id, $name, $code, $polygon, $capacity, $score_sign, $score_base, $score_high);
+	json(station_select_by_game($game, TRUE));
 }
 
-if (is_post('station2_delete')) {
+if (is_post('station_delete')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
 		exit('password');
 	$id = post_int('id');
-	if (!station2_belongs_to_game($id, $game))
+	if (!station_belongs_to_game($id, $game))
 		exit('id');
-	if (station2_count_attempts($id) !== 0)
+	if (station_count_attempts($id) !== 0)
 		exit('id');
-	station2_delete($id);
-	json(station2_select_by_game($game, TRUE));
+	station_delete($id);
+	json(station_select_by_game($game, TRUE));
 }
 
-if (is_post('team2_insert')) {
+if (is_post('team_insert')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
 		exit('password');
 	$name = post_string('name');
-	if (!is_null(team2_identify_by_name($name, $game)))
+	if (!is_null(team_identify_by_name($name, $game)))
 		json(NULL);
 	$background_color = post_string('background_color');
 	$text_color = post_string('text_color');
-	team2_insert($name, $background_color, $text_color, $game);
-	json(team2_select_by_game($game));
+	team_insert($name, $background_color, $text_color, $game);
+	json(team_select_by_game($game));
 }
 
-if (is_post('team2_update')) {
+if (is_post('team_update')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
 		exit('password');
 	$id = post_int('id');
-	if (!team2_belongs_to_game($id, $game))
+	if (!team_belongs_to_game($id, $game))
 		exit('id');
 	$name = post_string('name');
-	$team = team2_identify_by_name($name, $game);
+	$team = team_identify_by_name($name, $game);
 	if (!is_null($team) && $team !== $id)
 		json(NULL);
 	$background_color = post_string('background_color');
 	$text_color = post_string('text_color');
-	team2_update($id, $name, $background_color, $text_color);
-	json(team2_select_by_game($game));
+	team_update($id, $name, $background_color, $text_color);
+	json(team_select_by_game($game));
 }
 
-if (is_post('team2_delete')) {
+if (is_post('team_delete')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
 		exit('password');
 	$id = post_int('id');
-	if (!team2_belongs_to_game($id, $game))
+	if (!team_belongs_to_game($id, $game))
 		exit('id');
-	if (team2_count_players($id) !== 0)
+	if (team_count_players($id) !== 0)
 		exit('id');
-	if (team2_count_attempts($id) !== 0)
+	if (team_count_attempts($id) !== 0)
 		exit('id');
-	team2_delete($id);
-	json(team2_select_by_game($game));
+	team_delete($id);
+	json(team_select_by_game($game));
 }
 
-if (is_post('player2_insert')) {
+if (is_post('player_insert')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
 		exit('password');
 	$name = post_string('name');
 	$mark = post_string('mark');
-	if (!is_null(player2_identify_by_mark($mark, $game)))
+	if (!is_null(player_identify_by_mark($mark, $game)))
 		json(NULL);
 	$team = post_int('team');
-	if (!team2_belongs_to_game($team, $game))
+	if (!team_belongs_to_game($team, $game))
 		exit('team');
-	player2_insert($name, $mark, $team, $game);
-	json(player2_select_by_game($game));
+	player_insert($name, $mark, $team, $game);
+	json(player_select_by_game($game));
 }
 
-if (is_post('player2_update')) {
+if (is_post('player_update')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
 		exit('password');
 	$id = post_int('id');
-	if (!player2_belongs_to_game($id, $game))
+	if (!player_belongs_to_game($id, $game))
 		exit('id');
 	$name = post_string('name');
 	$mark = post_string('mark');
-	$player = player2_identify_by_mark($mark, $game);
+	$player = player_identify_by_mark($mark, $game);
 	if (!is_null($player) && $player !== $id)
 		json(NULL);
 	$team = post_int('team');
-	if (!team2_belongs_to_game($team, $game))
+	if (!team_belongs_to_game($team, $game))
 		exit('team');
-	player2_update($id, $name, $mark, $team);
-	json(player2_select_by_game($game));
+	player_update($id, $name, $mark, $team);
+	json(player_select_by_game($game));
 }
 
-if (is_post('player2_delete')) {
+if (is_post('player_delete')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
 		exit('password');
 	$id = post_int('id');
-	if (!player2_belongs_to_game($id, $game))
+	if (!player_belongs_to_game($id, $game))
 		exit('id');
-	if (!player2_count_attempts($id) !== 0)
+	if (!player_count_attempts($id) !== 0)
 		exit('id');
-	player2_delete($id);
-	json(player2_select_by_game($game));
+	player_delete($id);
+	json(player_select_by_game($game));
 }
 
-if (is_post('player2_import')) {
+if (is_post('player_import')) {
 	$game = post_int('game');
 	$password = post_string('password');
 	if (!game_matches($game, $password))
@@ -1194,7 +929,7 @@ if (is_post('player2_import')) {
 		$mark_list[] = $mark;
 		if (mb_strlen($name) === 0)
 			return 'Player name is empty.';
-		$team = team2_identify_by_name($team, $game);
+		$team = team_identify_by_name($team, $game);
 		if (is_null($team))
 			return 'Player team not found.';
 		return [
@@ -1216,10 +951,10 @@ if (is_post('player2_import')) {
 		$player_list[] = $line;
 	}
 	attempt_truncate($game);
-	player2_truncate($game);
+	player_truncate($game);
 	foreach ($player_list as $player)
-		player2_insert($player['name'], $player['mark'], $player['team'], $game);
-	json(player2_select_by_game($game));
+		player_insert($player['name'], $player['mark'], $player['team'], $game);
+	json(player_select_by_game($game));
 }
 
 if (is_post('attempt_truncate')) {
@@ -1231,25 +966,7 @@ if (is_post('attempt_truncate')) {
 	json(NULL);
 }
 
-// TODO delete POST admin_login
-if (is_post('admin_login')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		json(NULL);
-	json([
-		'game_start' => config_get_game_start()->to_js(),
-		'game_stop' => config_get_game_stop()->to_js(),
-		'reward_success' => config_get_reward_success(),
-		'reward_conquest' => config_get_reward_conquest(),
-		'reward_rate' => config_get_reward_rate(),
-		'place_list' => place_list(),
-		'station_list'=> station_with_code_list(),
-		'team_list' => team_list(),
-		'player_list' => player_list(),
-	]);
-}
-
-if (is_post('station2_list')) {
+if (is_post('station_list')) {
 	$game = post_string('game');
 	$game = game_identify_by_name($game);
 	if (is_null($game))
@@ -1257,27 +974,27 @@ if (is_post('station2_list')) {
 	json([
 		'game' => game_select_by_id($game),
 		'time' => time(),
-		'station_list' => station2_select_by_game($game),
+		'station_list' => station_select_by_game($game),
 	]);
 }
 
-if (is_post('station2_login')) {
+if (is_post('station_login')) {
 	$game = post_string('game');
 	$game = game_identify_by_name($game);
 	if (is_null($game))
 		exit('game');
 	$station = post_int('station');
-	if (!station2_belongs_to_game($station, $game))
+	if (!station_belongs_to_game($station, $game))
 		exit('station');
 	$code = post_string('code');
-	if (!station2_matches($station, $code))
+	if (!station_matches($station, $code))
 		json(NULL);
 	json([
 		'game' => game_select_by_id($game),
 		'time' => time(),
-		'station_list' => station2_select_by_game($game),
-		'team_list' => team2_select_by_game($game),
-		'player_list' => player2_select_by_game($game),
+		'station_list' => station_select_by_game($game),
+		'team_list' => team_select_by_game($game),
+		'player_list' => player_select_by_game($game),
 		'attempt_list' => attempt_select_by_station($station),
 	]);
 }
@@ -1288,10 +1005,10 @@ if (is_post('attempt_insert')) {
 	if (is_null($game))
 		exit('game');
 	$station = post_int('station');
-	if (!station2_belongs_to_game($station, $game))
+	if (!station_belongs_to_game($station, $game))
 		exit('station');
 	$code = post_string('code');
-	if (!station2_matches($station, $code))
+	if (!station_matches($station, $code))
 		exit('code');
 	$score = post_int('score');
 	$participant_list = post_string('participant_list');
@@ -1301,9 +1018,9 @@ if (is_post('attempt_insert')) {
 		$participant = filter_var($participant, FILTER_VALIDATE_INT);
 		if ($participant === FALSE)
 			exit('participant_list');
-		if (!player2_belongs_to_game($participant, $game))
+		if (!player_belongs_to_game($participant, $game))
 			exit('participant_list');
-		$t = player2_get_team($participant);
+		$t = player_get_team($participant);
 		if (is_null($team))
 			$team = $t;
 		elseif ($team !== $t)
@@ -1312,7 +1029,7 @@ if (is_post('attempt_insert')) {
 	}, $participant_list);
 	if (count(array_unique($participant_list, SORT_NUMERIC)) !== count($participant_list))
 		exit('participant_list');
-	if (count($participant_list) !== station2_get_capacity($station))
+	if (count($participant_list) !== station_get_capacity($station))
 		exit('participant_list');
 	$time = DT::from_now();
 	$game_start = game_get_start($game);
@@ -1327,9 +1044,9 @@ if (is_post('attempt_insert')) {
 	json([
 		'game' => game_select_by_id($game),
 		'time' => time(),
-		'station_list' => station2_select_by_game($game),
-		'team_list' => team2_select_by_game($game),
-		'player_list' => player2_select_by_game($game),
+		'station_list' => station_select_by_game($game),
+		'team_list' => team_select_by_game($game),
+		'player_list' => player_select_by_game($game),
 		'attempt_list' => attempt_select_by_station($station),
 	]);
 }
@@ -1340,10 +1057,10 @@ if (is_post('attempt_delete')) {
 	if (is_null($game))
 		exit('game');
 	$station = post_int('station');
-	if (!station2_belongs_to_game($station, $game))
+	if (!station_belongs_to_game($station, $game))
 		exit('station');
 	$code = post_string('code');
-	if (!station2_matches($station, $code))
+	if (!station_matches($station, $code))
 		exit('code');
 	$id = post_int('id');
 	if (!attempt_belongs_to_game($id, $game))
@@ -1352,9 +1069,9 @@ if (is_post('attempt_delete')) {
 	json([
 		'game' => game_select_by_id($game),
 		'time' => time(),
-		'station_list' => station2_select_by_game($game),
-		'team_list' => team2_select_by_game($game),
-		'player_list' => player2_select_by_game($game),
+		'station_list' => station_select_by_game($game),
+		'team_list' => team_select_by_game($game),
+		'player_list' => player_select_by_game($game),
 		'attempt_list' => attempt_select_by_station($station),
 	]);
 }
@@ -1367,147 +1084,10 @@ if (is_post('live')) {
 	json([
 		'game' => game_select_by_id($game),
 		'polygon_list' => polygon_select_by_game($game),
-		'station_list' => station2_select_by_game($game),
-		'team_list' => team2_select_by_game_with_players($game),
+		'station_list' => station_select_by_game($game),
+		'team_list' => team_select_by_game_with_players($game),
 		'attempt_list' => attempt_select_by_game($game),
 		'time' => DT::from_now()->to_int(),
-	]);
-}
-
-if (is_get('station_list')) {
-	json([
-		'station_list' => station_list(),
-	]);
-}
-
-if (is_post('station_login')) {
-	$station = post_int('station');
-	$password = post_string('password');
-	if (!station_matches($station, $password))
-		json(NULL);
-	$game_start = config_get_game_start();
-	$game_stop = config_get_game_stop();
-	$now = DT::from_now();
-	json([
-		'game_start' => $game_start->to_sql(),
-		'game_stop' => $game_stop->to_sql(),
-		'station_list' => station_list(),
-		'team_list' => team_list(),
-		'player_list' => player_list(),
-		'success_list' => success_list_by_station($station, $game_start, $game_stop),
-	]);
-}
-
-if (is_post('success_insert')) {
-	$station = post_int('station');
-	$password = post_string('password');
-	if (!station_matches($station, $password))
-		exit('credentials');
-	$type = post_string('type');
-	if (!in_array($type, ['simple', 'neutralization', 'conquest'], TRUE))
-		exit('type');
-	$player = post_string('player');
-	if (!player_exists($player))
-		exit('player');
-	$game_start = config_get_game_start();
-	$game_stop = config_get_game_stop();
-	$now = DT::from_now();
-	$game_state = get_game_state($now, $game_start, $game_stop);
-	if ($game_state !== 'running')
-		json($game_state);
-	$team = player_team($player);
-	$conqueror = station_conqueror($station, $game_start, $game_stop);
-	if ($type === 'neutralization' && (is_null($conqueror) || $team === $conqueror))
-		exit('type');
-	if ($type === 'conquest' && $team === $conqueror)
-		exit('type');
-	success_insert($station, $player, $type, $now);
-	json([
-		'game_start' => $game_start->to_sql(),
-		'game_stop' => $game_stop->to_sql(),
-		'station_list' => station_list(),
-		'team_list' => team_list(),
-		'player_list' => player_list(),
-		'success_list' => success_list_by_station($station, $game_start, $game_stop),
-	]);
-}
-
-if (is_post('success_delete')) {
-	$station = post_int('station');
-	$password = post_string('password');
-	if (!station_matches($station, $password))
-		exit('credentials');
-	$id = post_int('id');
-	if (success_latest($station) !== $id)
-		exit('id');
-	success_delete($id);
-	$game_start = config_get_game_start();
-	$game_stop = config_get_game_stop();
-	$now = DT::from_now();
-	json([
-		'game_start' => $game_start->to_sql(),
-		'game_stop' => $game_stop->to_sql(),
-		'station_list' => station_list(),
-		'team_list' => team_list(),
-		'player_list' => player_list(),
-		'success_list' => success_list_by_station($station, $game_start, $game_stop),
-	]);
-}
-
-if (is_get('map')) {
-	json([
-		'place_list' => place_with_content_list(),
-	]);
-}
-
-if (is_get('game')) {
-	$game_start = config_get_game_start();
-	$game_stop = config_get_game_stop();
-	$now = DT::from_now();
-	$game_state = get_game_state($now, $game_start, $game_stop);
-	if ($game_state === 'pending')
-		$timestamp = $game_start->to_int();
-	elseif ($game_state === 'finished')
-		$timestamp = $game_stop->to_int();
-	else
-		$timestamp = $now->to_int();
-	json([
-		'time_start' => $game_start->to_int(),
-		'time_stop' => $game_stop->to_int(),
-		'time_now' => $now->to_int(),
-		'reward_success' => config_get_reward_success(),
-		'reward_conquest' => config_get_reward_conquest(),
-		'reward_rate' => config_get_reward_rate(),
-		'station_list' => station_list(),
-		'team_list' => team_with_players_list(),
-		'success_list' => success_with_team_list($game_start, $game_stop),
-	]);
-}
-
-if (is_post('inspect')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$game_start = config_get_game_start();
-	$game_stop = config_get_game_stop();
-	json([
-		'game_start' => $game_start->to_int(),
-		'station_list' => station_list(),
-		'team_list' => team_list(),
-		'player_list' => player_list(),
-		'success_list' => success_list($game_start, $game_stop),
-	]);
-}
-
-if (is_post('draw')) {
-	$password = post_string('password');
-	if ($password !== ADMIN_PASS)
-		exit('password');
-	$game_start = config_get_game_start();
-	$game_stop = config_get_game_stop();
-	json([
-		'team_list' => team_list(),
-		'player_list' => player_points($game_start, $game_stop),
 	]);
 }
 

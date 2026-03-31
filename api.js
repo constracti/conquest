@@ -1,6 +1,3 @@
-import { lexicon } from "./lexicon.js";
-
-
 export class API {
 
 	/**
@@ -49,7 +46,7 @@ export class API {
 			return await response.json();
 		} catch (error) {
 			console.error(error);
-			alert(lexicon.error);
+			alert(error);
 			throw error;
 		}
 	}
