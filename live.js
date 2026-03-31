@@ -71,8 +71,6 @@ let state = null;
 
 // TODO define common routines in common.js
 
-// TODO responsive
-
 /**
  * @type {HTMLDivElement}
  */
@@ -125,10 +123,10 @@ function render() {
 	})(state.game.title ?? app_name2);
 	// map
 	if (state.game.map !== null) {
-		canvas.classList.remove('ratio', 'ratio-1x1');
+		canvas.classList.remove('map-null');
 		map_img.src = state.game.map;
 	} else {
-		canvas.classList.add('ratio', 'ratio-1x1');
+		canvas.classList.add('map-null');
 		map_img.src = '';
 	}
 	// svg
@@ -268,7 +266,7 @@ function station_render() {
 	const conqueror = state.conqueror_map.get(station.id);
 	const team = conqueror !== null && conqueror.team !== null ? state.team_map.get(conqueror.team) : null;
 	station_popup.append(n({
-		class: 'm-2 alert d-flex flex-row align-items-center p-1',
+		class: 'm-2 alert alert-dark d-flex flex-row align-items-center p-1',
 		content: [
 			n({
 				class: 'm-1',
