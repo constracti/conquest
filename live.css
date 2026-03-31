@@ -40,6 +40,9 @@
 #canvas .alert {
 	background-color: rgb(from var(--bs-alert-bg) r g b / 50%);
 }
+#canvas #station-popup .alert {
+	background-color: rgb(from var(--bs-alert-bg) r g b / 90%);
+}
 
 #canvas .list-group-item {
 	background-color: rgb(from var(--bs-list-group-bg) r g b / 50%);

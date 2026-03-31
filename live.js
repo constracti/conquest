@@ -1,4 +1,4 @@
-import { api, app_name2, attempt_type, conquest_push, human_duration, score_conquest, score_success, team2_badge } from './common.js';
+import { api, app_name2, human_duration, run, score_conquest, score_success, team2_badge } from './common.js';
 import { n } from './element.js';
 
 /**
@@ -56,6 +56,12 @@ import { n } from './element.js';
  * @property {Attempt[]} attempt_list
  * @property {number} time
  * @property {number} time_offset
+ * @property {Map<number, Station>} station_map
+ * @property {Map<number, Team>} team_map
+ * @property {Map<number, ?Conqueror>} conqueror_map by station
+ * @property {Conquest[]} conquest_list
+ * @property {Map<number, ?string>} attempt_type_map
+ * @property {?number} station
  */
 
 /**
@@ -66,7 +72,6 @@ let state = null;
 // TODO define common routines in common.js
 
 // TODO responsive
-// TODO conqueror popup
 
 /**
  * @type {HTMLDivElement}
@@ -103,6 +108,11 @@ const score_list = document.getElementById('score-list');
  */
 const history_list = document.getElementById('history-list');
 
+/**
+ * @type {HTMLDivElement}
+ */
+const station_popup = document.getElementById('station-popup');
+
 function render() {
 	if (state === null)
 		return;
@@ -121,55 +131,8 @@ function render() {
 		canvas.classList.add('ratio', 'ratio-1x1');
 		map_img.src = '';
 	}
-	// run
-	const polygon_map = new Map(state.polygon_list.map(polygon => [polygon.id, polygon]));
-	const station_map = new Map(state.station_list.map(station => [station.id, station]));
-	const team_map = new Map(state.team_list.map(team => [team.id, team]));
-	const time = state.time < state.game.game_start ? state.game.game_start : (state.time < state.game.game_stop ? state.time : state.game.game_stop);
-	/**
-	 * @type {Map<number, Conqueror>}
-	 */
-	const conqueror_map_by_station = new Map(state.station_list.map(station => [station.id, {
-		team: null,
-		time: null,
-		record: null,
-	}]));
-	/**
-	 * @type {Conquest[]}
-	 */
-	const conquest_list = [];
-	const type_map_by_attempt = new Map(state.attempt_list.toSorted((lhs, rhs) => lhs.time - rhs.time).map(attempt => {
-		const station = station_map.get(attempt.station);
-		const conqueror = conqueror_map_by_station.get(attempt.station);
-		const type = attempt_type(
-			station.score_sign, station.score_base, station.score_high,
-			attempt.score, attempt.team, attempt.time,
-			conqueror, conquest_list,
-		);
-		return [attempt.id, type];
-	}));
-	state.station_list.forEach(station => {
-		const conqueror = conqueror_map_by_station.get(station.id);
-		conquest_push(conquest_list, conqueror, time);
-	});
-	const score_map_by_team = new Map(state.team_list.map(team => [team.id, 0]));
-	// score from successes
-	state.attempt_list.forEach(attempt => {
-		const type = type_map_by_attempt.get(attempt.id);
-		if (type !== 'Failure')
-			score_map_by_team.set(attempt.team, score_map_by_team.get(attempt.team) + score_success(state.game, attempt.time));
-	});
-	// score from conquests
-	conquest_list.forEach(conquest => {
-		score_map_by_team.set(conquest.team, score_map_by_team.get(conquest.team) + score_conquest(state.game, conquest.start, conquest.stop));
-	});
-	// normalize score
-	state.team_list.forEach(team => {
-		if (team.players > 0)
-			score_map_by_team.set(team.id, score_map_by_team.get(team.id) / team.players);
-	});
-	const score_max = Math.max(1, ...score_map_by_team.values());
 	// svg
+	const polygon_map = new Map(state.polygon_list.map(polygon => [polygon.id, polygon]));
 	svg.innerHTML = '';
 	svg.append(...state.station_list.map(station => {
 		if (station.polygon === null)
@@ -177,8 +140,8 @@ function render() {
 		const polygon = polygon_map.get(station.polygon);
 		if (polygon.content === null)
 			return null;
-		const conqueror = conqueror_map_by_station.get(station.id);
-		const team = conqueror.team !== null ? team_map.get(conqueror.team) : null;
+		const conqueror = state.conqueror_map.get(station.id);
+		const team = conqueror.team !== null ? state.team_map.get(conqueror.team) : null;
 		const svg_polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
 		polygon.content.split(' ').forEach(pair => {
 			const number_list = pair.split(',').map(parseFloat);
@@ -193,9 +156,33 @@ function render() {
 			svg_polygon.style.stroke = team?.background_color ?? 'white';
 			svg_polygon.style.fill = team?.background_color ?? 'white';
 		});
+		svg_polygon.addEventListener('click', () => {
+			if (state.station !== station.id)
+				state.station = station.id;
+			else
+				state.station = null;
+			station_render();
+		});
 		return svg_polygon;
 	}).filter(svg_polygon => svg_polygon !== null));
-	// score
+	// score // TODO move score to common
+	const score_map_by_team = new Map(state.team_list.map(team => [team.id, 0]));
+	// score from successes
+	state.attempt_list.forEach(attempt => {
+		const type = state.attempt_type_map.get(attempt.id);
+		if (type !== null && type !== 'Failure')
+			score_map_by_team.set(attempt.team, score_map_by_team.get(attempt.team) + score_success(state.game, attempt.time));
+	});
+	// score from conquests
+	state.conquest_list.forEach(conquest => {
+		score_map_by_team.set(conquest.team, score_map_by_team.get(conquest.team) + score_conquest(state.game, conquest.start, conquest.stop));
+	});
+	// score normalization
+	state.team_list.forEach(team => {
+		if (team.players > 0)
+			score_map_by_team.set(team.id, score_map_by_team.get(team.id) / team.players);
+	});
+	const score_max = Math.max(1, ...score_map_by_team.values());
 	score_list.innerHTML = '';
 	score_list.append(...state.team_list.toSorted((lhs, rhs) => score_map_by_team.get(lhs.id) - score_map_by_team.get(rhs.id)).toReversed().map(team => {
 		const score = score_map_by_team.get(team.id);
@@ -229,12 +216,12 @@ function render() {
 	}));
 	// history
 	history_list.innerHTML = '';
-	state.attempt_list.toSorted((lhs, rhs) => lhs.time - rhs.time).toReversed().forEach(attempt => {
-		const type = type_map_by_attempt.get(attempt.id);
-		if (type === 'Failure')
+	state.attempt_list.toReversed().forEach(attempt => {
+		const type = state.attempt_type_map.get(attempt.id);
+		if (type === null && type === 'Failure')
 			return;
-		const station = station_map.get(attempt.station);
-		const team = team_map.get(attempt.team);
+		const station = state.station_map.get(attempt.station);
+		const team = state.team_map.get(attempt.team);
 		history_list.append(n({
 			class: 'list-group-item d-flex flex-column p-1',
 			content: [
@@ -271,6 +258,35 @@ function render() {
 	});
 }
 
+function station_render() {
+	if (state === null)
+		return;
+	station_popup.innerHTML = '';
+	if (state.station === null)
+		return;
+	const station = state.station_map.get(state.station);
+	const conqueror = state.conqueror_map.get(station.id);
+	const team = conqueror !== null && conqueror.team !== null ? state.team_map.get(conqueror.team) : null;
+	station_popup.append(n({
+		class: 'm-2 alert d-flex flex-row align-items-center p-1',
+		content: [
+			n({
+				class: 'm-1',
+				content: station.name,
+			}),
+			team !== null ? team2_badge(team) : null,
+			n({
+				tag: 'button',
+				class: 'btn-close m-1',
+				click: () => {
+					state.station = null;
+					station_render();
+				},
+			}),
+		].filter(element => element !== null),
+	}));
+}
+
 function exit() {
 	const error = new Error('Invalid game parameter in url.');
 	console.error(error.message);
@@ -299,6 +315,10 @@ async function server_loop() {
 		exit();
 	}
 	spinner_div.classList.add('d-none');
+	const time = result.time < result.game.game_start ? result.game.game_start : (result.time < result.game.game_stop ? result.time : result.game.game_stop);
+	const time_offset = result.time - Date.now() / 1000;
+	const simulation = run(result.station_list, result.attempt_list, time);
+	const station_map = new Map(result.station_list.map(station => [station.id, station]));
 	state = {
 		game: result.game,
 		polygon_list: result.polygon_list,
@@ -306,9 +326,16 @@ async function server_loop() {
 		team_list: result.team_list,
 		attempt_list: result.attempt_list,
 		time: result.time,
-		time_offset: result.time - Date.now() / 1000,
+		time_offset: time_offset,
+		station_map: station_map,
+		team_map: new Map(result.team_list.map(team => [team.id, team])),
+		conqueror_map: simulation.conqueror_map,
+		conquest_list: simulation.conquest_list,
+		attempt_type_map: simulation.attempt_type_map,
+		station: state !== null && state.station !== null && station_map.has(state.station) ? state.station : null,
 	};
 	render();
+	station_render();
 }
 setInterval(server_loop, 10000);
 server_loop();

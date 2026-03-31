@@ -1,4 +1,4 @@
-import { api, attempt_type, human_duration, score_sign_list, team2_badge } from './common.js';
+import { api, human_duration, run_station, score_sign_list, team2_badge } from './common.js';
 import { n, n_option_list2 } from './element.js';
 
 /**
@@ -230,18 +230,13 @@ function render() {
 	else
 		attempt_form.classList.add('d-none');
 	attempt_list.innerHTML = '';
-	/**
-	 * @type {Conqueror}
-	 */
-	const conqueror = {
-		team: null,
-		time: null,
-		record: null,
-	};
-	login_state.attempt_list.forEach(attempt => {
+	const attempt_type_map = run_station(station, login_state.attempt_list);
+	login_state.attempt_list.toReversed().forEach(attempt => {
 		const team = login_state.team_map.get(attempt.team);
-		const type = attempt_type(station.score_sign, station.score_base, station.score_high, attempt.score, attempt.time, attempt.team, conqueror);
-		attempt_list.prepend(n({
+		const type = attempt_type_map.get(attempt.id);
+		if (type === null)
+			return;
+		attempt_list.append(n({
 			class: 'list-group-item p-1',
 			content: [
 				n({
