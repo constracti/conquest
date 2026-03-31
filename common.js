@@ -2,7 +2,7 @@ import { API } from './api.js';
 import { n } from './element.js';
 
 /**
- * @typedef Game2
+ * @typedef Game
  * @type {object}
  * @property {number} id
  * @property {string} name
@@ -30,15 +30,6 @@ import { n } from './element.js';
  * @type {object}
  * @property {number} id
  * @property {string} name
- * @property {number} capacity - positive integer
- * @property {?number} place
- */
-
-/**
- * @typedef Station2
- * @type {object}
- * @property {number} id
- * @property {string} name
  * @property {string} code
  * @property {?number} polygon
  * @property {number} capacity
@@ -52,29 +43,12 @@ import { n } from './element.js';
  * @type {object}
  * @property {number} id
  * @property {string} name
- * @property {string} color
- */
-
-/**
- * @typedef Team2
- * @type {object}
- * @property {number} id
- * @property {string} name
  * @property {string} background_color
  * @property {string} text_color
  */
 
 /**
  * @typedef Player
- * @type {object}
- * @property {string} id
- * @property {string} name
- * @property {number} team
- * @property {boolean} block
- */
-
-/**
- * @typedef Player2
  * @type {object}
  * @property {number} id
  * @property {string} name
@@ -109,52 +83,12 @@ import { n } from './element.js';
  * @property {number} stop
  */
 
-/**
- * @typedef Game
- * @type {object}
- * @property {number} time_start
- * @property {number} time_stop
- * @property {number} time_now
- * @property {number} reward_success
- * @property {number} reward_conquest
- * @property {number} reward_rate
- * @property {Station[]} station_list
- * @property {Team[]} team_list
- * @property {Success[]} success_list
- */
-
 export const api = new API();
-
-export const app_name2 = 'The Station War';
-
-/**
- * 
- * @param {string} title
- */
-function set_title(title) {
-	document.title = title;
-	Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
-		h1.innerHTML = app_name;
-	});
-}
 
 /**
  * @type {string}
  */
-const app_name = await api.get('app_name');
-set_title(app_name); // TODO is this necessary?
-
-/**
- * css expression resulting in a contrasting black or white color,
- * that depends on background color lightness (l)
- * and assuming lightness is not near mean
- * @param {string} background_color
- * @returns {string}
- */
-function text_color(background_color) {
-	const mean = 60;
-	return `lab(from ${background_color} calc((${mean} - l) * 100 + 100 - ${mean}) 0 0)`;
-}
+export const app_name = await api.get('app_name');
 
 export const score_sign_list = [
 	{id: 0, name: 'Higher score wins'},
@@ -163,24 +97,9 @@ export const score_sign_list = [
 
 /**
  * @param {Team} team
- * @returns {HTMLDivElement} TODO replace function
- */
-export function team_badge(team) {
-	return n({
-		class: 'badge border m-1',
-		style: {
-			backgroundColor: team.color,
-			color: text_color(team.color),
-		},
-		content: team.name,
-	});
-}
-
-/**
- * @param {Team2} team
  * @returns {HTMLDivElement}
  */
-export function team2_badge(team) {
+export function team_badge(team) {
 	return n({
 		class: 'badge border m-1',
 		style: {
@@ -205,25 +124,6 @@ export function human_duration(seconds) {
 	let hours = Math.floor(minutes / 60);
 	minutes -= hours * 60;
 	return `${sign}${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-}
-
-/**
- * @param {?Conquest[]} conquest_list
- * @param {Conqueror} conqueror
- * @param {number} time
- */
-export function conquest_push(conquest_list, conqueror, time) {
-	if (conquest_list === null)
-		return;
-	if (conqueror.team === null)
-		return;
-	if (conqueror.time === null)
-		return;
-	conquest_list.push({
-		team: conqueror.team,
-		start: conqueror.time,
-		stop: time,
-	});
 }
 
 /**
@@ -259,13 +159,13 @@ function push(conquest_list, conqueror, time) {
 }
 
 /**
- * @param {Station2[]} station_list
+ * @param {Station[]} station_list
  * @param {Attempt[]} attempt_list
  * @param {number} time
  */
 export function run(station_list, attempt_list, time) {
 	/**
-	 * @type {Map<number, Station2>}
+	 * @type {Map<number, Station>}
 	 */
 	const station_map = new Map(station_list.map(station => [station.id, station]));
 	/**
@@ -335,7 +235,7 @@ export function run(station_list, attempt_list, time) {
 }
 
 /**
- * @param {Station2} station
+ * @param {Station} station
  * @param {Attempt[]} attempt_list
  */
 export function run_station(station, attempt_list) {
@@ -344,7 +244,7 @@ export function run_station(station, attempt_list) {
 
 /**
  * 
- * @param {Game2} game
+ * @param {Game} game
  * @param {number} current_timestamp
  * @returns {number}
  */
@@ -354,7 +254,7 @@ export function score_success(game, current_timestamp) {
 }
 
 /**
- * @param {Game2} game
+ * @param {Game} game
  * @param {number} start_timestamp
  * @param {number} stop_timestamp
  * @returns {number}

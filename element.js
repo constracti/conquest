@@ -81,38 +81,9 @@ export function n(options) {
 
 /**
  * @param {{id: number, name: string}[]} option_list
- * @param {?string} option_null
  * @returns {HTMLOptionElement[]}
  */
-export function n_option_list(option_list, option_null) {
-	if (option_null === undefined)
-		option_null = null;
-	/**
-	 * @type {HTMLOptionElement[]}
-	 */
-	const element_list = [];
-	if (option_null !== null) {
-		element_list.push(n({
-			tag: 'option',
-			value: '',
-			content: option_null,
-		}));
-	}
-	for (const option of option_list) {
-		element_list.push(n({
-			tag: 'option',
-			value: `${option.id}`,
-			content: option.name,
-		}));
-	}
-	return element_list;
-}
-
-/**
- * @param {{id: number, name: string}[]} option_list
- * @returns {HTMLOptionElement[]}
- */
-export function n_option_list2(option_list) {
+export function n_option_list(option_list) {
 	const select_option = document.createElement('option');
 	select_option.value = '';
 	select_option.innerHTML = '-';
@@ -188,7 +159,7 @@ export function n_form_control(options) {
 		const select = document.createElement('select');
 		select.name = options.name;
 		if (options.option_list !== null)
-			select.append(...n_option_list2(options.option_list));
+			select.append(...n_option_list(options.option_list));
 		if (options.value !== null)
 			select.value = options.value;
 		select.required = options.required;
