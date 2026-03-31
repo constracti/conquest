@@ -10,29 +10,31 @@
 		<link rel="stylesheet" href="live.css">
 	</head>
 	<body class="d-flex flex-column">
-		<div class="position-relative m-auto" id="canvas">
-			<img class="w-100" id="map-img">
-			<svg class="position-absolute" id="svg" viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="none"></svg>
-			<div class="p-2" id="heading-section">
+		<div class="m-auto p-2 p-md-0" id="canvas">
+			<section class="p-md-2" id="heading-section">
 				<h1 class="m-2 fw-bold"></h1>
-			</div>
-			<div class="d-flex flex-row align-items-center p-2" id="status-section">
-				<div class="spinner-border m-2 d-none" id="spinner-div"></div>
+			</section>
+			<section class="d-flex flex-row align-items-center p-md-2" id="status-section">
 				<div class="alert alert-secondary m-2 p-2 d-none" id="timer-div"></div>
+				<div class="spinner-border m-2 d-none" id="spinner-div"></div>
+			</section>
+			<div class="position-relative m-2 m-md-0" id="map-div">
+				<img class="w-100" id="map-img">
+				<svg class="position-absolute" id="svg" viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="none"></svg>
+				<div class="position-absolute top-50 start-50 translate-middle" id="station-popup"></div>
 			</div>
-			<section class="d-flex flex-column p-2" id="score-section">
+			<section class="d-flex flex-column p-md-2" id="score-section">
 				<h2 class="m-2">Score</h2>
 				<div class="m-2 overflow-y-auto">
 					<div class="list-group" id="score-list"></div>
 				</div>
 			</section>
-			<section class="d-flex flex-column p-2" id="history-section">
-				<h2 class="m-2 text-end">Successes</h2>
+			<section class="d-flex flex-column p-md-2" id="history-section">
+				<h2 class="m-2 text-md-end">Successes</h2>
 				<div class="m-2 overflow-y-auto">
 					<div class="list-group" id="history-list"></div>
 				</div>
 			</section>
-			<div class="position-absolute top-50 start-50 translate-middle" id="station-popup"></div>
 		</div>
 		<div class="d-flex flex-column" id="footer-div"></div>
 		<script type="module" src="./live.js"></script>
