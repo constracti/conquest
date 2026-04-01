@@ -11,7 +11,7 @@
 	<body class="d-flex flex-column">
 		<div class="m-auto p-2 p-md-0" id="canvas">
 			<section class="p-md-2" id="heading-section">
-				<h1 class="m-2 fw-bold"></h1>
+				<h1 class="m-2 fw-bold" id="game-heading"></h1>
 			</section>
 			<section class="d-flex flex-row align-items-center p-md-2" id="status-section">
 				<div class="alert alert-secondary m-2 p-2 d-none" id="timer-div"></div>
@@ -23,19 +23,18 @@
 				<div class="position-absolute top-50 start-50 translate-middle" id="station-popup"></div>
 			</div>
 			<section class="d-flex flex-column p-md-2" id="score-section">
-				<h2 class="m-2">Score</h2>
+				<h2 class="m-2" id="score-heading"></h2>
 				<div class="m-2 overflow-y-auto">
 					<div class="list-group" id="score-list"></div>
 				</div>
 			</section>
 			<section class="d-flex flex-column p-md-2" id="history-section">
-				<h2 class="m-2 text-md-end">Successes</h2>
+				<h2 class="m-2 text-md-end" id="history-heading"></h2>
 				<div class="m-2 overflow-y-auto">
 					<div class="list-group" id="history-list"></div>
 				</div>
 			</section>
 		</div>
-		<div class="d-flex flex-column" id="footer-div"></div>
 		<script type="module" src="./live.js"></script>
 	</body>
 </html>

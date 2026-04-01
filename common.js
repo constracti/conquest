@@ -97,17 +97,6 @@ export function exit() {
  */
 export const app_name = await api.get('app_name');
 
-/**
- * @param {Game} game
- */
-export function title_set(game) {
-	const title = game.title ?? app_name;
-	document.title = title;
-	Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
-		h1.innerHTML = title;
-	});
-}
-
 // TODO translate game
 
 /**
