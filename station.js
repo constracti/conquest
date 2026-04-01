@@ -1,4 +1,4 @@
-import { api, exit, human_duration, run_station, score_sign_list, team_badge, title_set } from './common.js';
+import { api, app_name, exit, human_duration, run_station, score_sign_list, team_badge } from './common.js';
 import { n, n_option_list } from './element.js';
 
 /**
@@ -122,7 +122,9 @@ await (async () => {
 if (home_state === null)
 	exit();
 
-title_set(home_state.game);
+document.title = home_state.game.title ?? app_name;
+
+document.getElementById('game-heading').innerHTML = home_state.game.title ?? app_name;
 
 /**
  * @type {HTMLDivElement}

@@ -1,4 +1,4 @@
-import { api, exit, human_duration, run, score_conquest, score_success, team_badge, title_set } from './common.js';
+import { api, app_name, exit, human_duration, run, score_conquest, score_success, team_badge, translate } from './common.js';
 import { n } from './element.js';
 
 /**
@@ -75,6 +75,11 @@ let state = null;
 const canvas = document.getElementById('canvas');
 
 /**
+ * @type {HTMLHeadingElement}
+ */
+const game_heading = document.getElementById('game-heading');
+
+/**
  * @type {HTMLImageElement}
  */
 const map_img = document.getElementById('map-img');
@@ -95,9 +100,19 @@ const spinner_div = document.getElementById('spinner-div');
 const timer_div = document.getElementById('timer-div');
 
 /**
+ * @type {HTMLHeadingElement}
+ */
+const score_heading = document.getElementById('score-heading');
+
+/**
  * @type {HTMLDivElement}
  */
 const score_list = document.getElementById('score-list');
+
+/**
+ * @type {HTMLHeadingElement}
+ */
+const history_heading = document.getElementById('history-heading');
 
 /**
  * @type {HTMLDivElement}
@@ -113,7 +128,8 @@ function render() {
 	if (state === null)
 		return;
 	// title
-	title_set(state.game);
+	document.title = state.game.title ?? app_name;
+	game_heading.innerHTML = state.game.title ?? app_name;
 	// map
 	if (state.game.map !== null) {
 		canvas.classList.remove('map-null');
@@ -174,6 +190,7 @@ function render() {
 			score_map_by_team.set(team.id, score_map_by_team.get(team.id) / team.players);
 	});
 	const score_max = Math.max(1, ...score_map_by_team.values());
+	score_heading.innerHTML = translate('Score');
 	score_list.innerHTML = '';
 	score_list.append(...state.team_list.toSorted((lhs, rhs) => score_map_by_team.get(lhs.id) - score_map_by_team.get(rhs.id)).toReversed().map(team => {
 		const score = score_map_by_team.get(team.id);
@@ -206,6 +223,7 @@ function render() {
 		});
 	}));
 	// history
+	history_heading.innerHTML = translate('Successes');
 	history_list.innerHTML = '';
 	state.attempt_list.toReversed().forEach(attempt => {
 		const type = state.attempt_type_map.get(attempt.id);
@@ -221,7 +239,7 @@ function render() {
 					content: [
 						n({
 							class: 'm-1',
-							content: type,
+							content: translate(type),
 						}),
 						n({
 							class: 'm-1',
@@ -329,11 +347,11 @@ function timer_loop() {
 		return;
 	const time = state.time_offset + Date.now() / 1000;
 	if (time < state.game.game_start)
-		timer_div.innerHTML = `Game start: ${human_duration(state.game.game_start - time)}`;
+		timer_div.innerHTML = `${translate('Game start')}: ${human_duration(state.game.game_start - time)}`;
 	else if (time < state.game.game_stop)
-		timer_div.innerHTML = `Game stop: ${human_duration(state.game.game_stop - time)}`;
+		timer_div.innerHTML = `${translate('Game stop')}: ${human_duration(state.game.game_stop - time)}`;
 	else
-		timer_div.innerHTML = 'Game over.';
+		timer_div.innerHTML = `${translate('Game over')}.`;
 	timer_div.classList.remove('d-none');
 }
 setInterval(timer_loop, 1000);

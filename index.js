@@ -1,4 +1,4 @@
-import { api, score_sign_list, team_badge } from './common.js';
+import { api, app_name, score_sign_list, team_badge } from './common.js';
 import { n, n_form_hidden, n_form_control, n_form_submit, n_form_cancel } from './element.js';
 
 /**
@@ -987,6 +987,10 @@ document.getElementById('register-button').addEventListener('click', () => {
 	login_form.classList.add('d-none');
 	register_form.classList.remove('d-none');
 });
+
+document.title = app_name;
+
+document.getElementById('app-heading').innerHTML = app_name;
 
 /**
  * @type {HTMLInputElement}
