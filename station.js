@@ -1,4 +1,4 @@
-import { api, human_duration, run_station, score_sign_list, team_badge } from './common.js';
+import { api, exit, human_duration, run_station, score_sign_list, team_badge, title_set } from './common.js';
 import { n, n_option_list } from './element.js';
 
 /**
@@ -119,19 +119,10 @@ await (async () => {
 	home_result_to_state(result);
 })();
 
-if (home_state === null) {
-	const error = new Error('Invalid game parameter in url.');
-	console.error(error.message);
-	alert(error.message);
-	throw error;
-}
+if (home_state === null)
+	exit();
 
-((title) => {
-	document.title = title;
-	Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
-		h1.innerHTML = title;
-	});
-})(home_state.game.title ?? 'The Station War');
+title_set(home_state.game);
 
 /**
  * @type {HTMLDivElement}

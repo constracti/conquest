@@ -1,5 +1,6 @@
+/* TODO set custom CSS per game */
+
 :root {
-	/* TODO set in game table */
 	--canvas-top: 10%;
 	--canvas-left: 0%;
 	--canvas-right: 1.3%;

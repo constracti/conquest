@@ -570,6 +570,13 @@ function attempt_truncate(int $game): void {
 
 // participant
 
+function participant_select_by_game(int $game): array {
+	global $db;
+	$stmt = $db->prepare('SELECT `attempt`, `player` FROM `participant` WHERE `game` = ?');
+	$stmt->bind_param('i', $game);
+	return stmt_list($stmt);
+}
+
 function participant_insert(int $attempt, int $player, int $game): void {
 	global $db;
 	$stmt = $db->prepare('INSERT INTO `participant` (`attempt`, `player`, `game`) VALUES (?, ?, ?)');
@@ -1088,6 +1095,24 @@ if (is_post('live')) {
 		'team_list' => team_select_by_game_with_players($game),
 		'attempt_list' => attempt_select_by_game($game),
 		'time' => DT::from_now()->to_int(),
+	]);
+}
+
+if (is_post('draw')) {
+	$name = post_string('name');
+	$id = game_identify_by_name($name);
+	if (is_null($id))
+		json(NULL);
+	$password = post_string('password');
+	if (!game_matches($id, $password))
+		json(NULL);
+	json([
+		'game' => game_select_by_id($id),
+		'station_list' => station_select_by_game($id),
+		'team_list' => team_select_by_game($id),
+		'player_list' => player_select_by_game($id),
+		'attempt_list' => attempt_select_by_game($id),
+		'participant_list' => participant_select_by_game($id),
 	]);
 }
 

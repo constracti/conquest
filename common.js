@@ -85,10 +85,41 @@ import { n } from './element.js';
 
 export const api = new API();
 
+export function exit() {
+	const error = new Error('Invalid game parameter in url.');
+	console.error(error.message);
+	alert(error.message);
+	throw error;
+}
+
 /**
  * @type {string}
  */
 export const app_name = await api.get('app_name');
+
+/**
+ * @param {Game} game
+ */
+export function title_set(game) {
+	const title = game.title ?? app_name;
+	document.title = title;
+	Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
+		h1.innerHTML = title;
+	});
+}
+
+// TODO translate game
+
+/**
+ * @param {string} phrase
+ * @param {?Map<string, string>} lexicon
+ * @returns {string}
+ */
+export function translate(phrase, lexicon = null) {
+	if (lexicon === null)
+		return phrase;
+	return lexicon.get(phrase) ?? phrase;
+}
 
 export const score_sign_list = [
 	{id: 0, name: 'Higher score wins'},
