@@ -1,4 +1,4 @@
-import { api, app_name, human_duration, run, score_conquest, score_success, team_badge } from './common.js';
+import { api, exit, human_duration, run, score_conquest, score_success, team_badge, title_set } from './common.js';
 import { n } from './element.js';
 
 /**
@@ -69,8 +69,6 @@ import { n } from './element.js';
  */
 let state = null;
 
-// TODO define common routines in common.js
-
 /**
  * @type {HTMLDivElement}
  */
@@ -115,12 +113,7 @@ function render() {
 	if (state === null)
 		return;
 	// title
-	((title) => {
-		document.title = title;
-		Array.from(document.getElementsByTagName('h1')).forEach(h1 => {
-			h1.innerHTML = title;
-		});
-	})(state.game.title ?? app_name);
+	title_set(state.game);
 	// map
 	if (state.game.map !== null) {
 		canvas.classList.remove('map-null');
@@ -163,7 +156,7 @@ function render() {
 		});
 		return svg_polygon;
 	}).filter(svg_polygon => svg_polygon !== null));
-	// score // TODO move score to common
+	// score
 	const score_map_by_team = new Map(state.team_list.map(team => [team.id, 0]));
 	// score from successes
 	state.attempt_list.forEach(attempt => {
@@ -283,13 +276,6 @@ function station_render() {
 			}),
 		].filter(element => element !== null),
 	}));
-}
-
-function exit() {
-	const error = new Error('Invalid game parameter in url.');
-	console.error(error.message);
-	alert(error.message);
-	throw error;
 }
 
 async function server_loop() {
