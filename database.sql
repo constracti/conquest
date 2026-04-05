@@ -19,7 +19,8 @@ CREATE TABLE `game` (
 	`reward_success` int(11) NOT NULL,
 	`reward_conquest` int(11) NOT NULL,
 	`reward_rate` float NOT NULL,
-	`map` varchar(255) DEFAULT NULL
+	`map` varchar(255) DEFAULT NULL,
+	`css` text DEFAULT NULL
 );
 
 DROP TABLE IF EXISTS `participant`;

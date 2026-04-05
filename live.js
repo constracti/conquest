@@ -70,6 +70,11 @@ import { n } from './element.js';
 let state = null;
 
 /**
+ * @type {HTMLStyleElement}
+ */
+const game_style = document.getElementById('game-style');
+
+/**
  * @type {HTMLDivElement}
  */
 const canvas = document.getElementById('canvas');
@@ -127,8 +132,9 @@ const station_popup = document.getElementById('station-popup');
 function render() {
 	if (state === null)
 		return;
-	// title
+	// title & style
 	document.title = state.game.title ?? app_name;
+	game_style.innerHTML = state.game.css ?? '';
 	game_heading.innerHTML = state.game.title ?? app_name;
 	// map
 	if (state.game.map !== null) {

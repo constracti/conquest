@@ -331,6 +331,8 @@ const state = await (async () => {
 
 document.title = state.game.title ?? app_name;
 
+document.getElementById('game-style').innerHTML = state.game.css ?? '';
+
 game_heading.innerHTML = state.game.title ?? app_name;
 
 speed_input.previousElementSibling.innerHTML = translate('Speed');

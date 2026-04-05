@@ -15,6 +15,7 @@ import { n } from './element.js';
  * @property {number} reward_conquest
  * @property {number} reward_rate
  * @property {?string} map
+ * @property {?string} css
  */
 
 /**

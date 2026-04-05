@@ -104,7 +104,7 @@ function move_file(string $temp_path, string $upload_dir, string $file_name): st
 function game_select_by_id(int $id): ?array {
 	global $db;
 	$stmt = $db->prepare('
-	SELECT `id`, `name`, `title`, `game_start`, `game_stop`, `reward_success`, `reward_conquest`, `reward_rate`, `map`
+	SELECT `id`, `name`, `title`, `game_start`, `game_stop`, `reward_success`, `reward_conquest`, `reward_rate`, `map`, `css`, `translation`
 	FROM `game`
 	WHERE `id` = ?
 	');
@@ -178,16 +178,17 @@ function game_update(
 	int $id, ?string $title,
 	DT $game_start, DT $game_stop,
 	int $reward_success, int $reward_conquest, float $reward_rate,
+	?string $css,
 ): void {
 	global $db;
 	$game_start = $game_start->to_int();
 	$game_stop = $game_stop->to_int();
 	$stmt = $db->prepare('
 	UPDATE `game`
-	SET `title` = ?, `game_start` = ?, `game_stop` = ?, `reward_success` = ?, `reward_conquest` = ?, `reward_rate` = ?
+	SET `title` = ?, `game_start` = ?, `game_stop` = ?, `reward_success` = ?, `reward_conquest` = ?, `reward_rate` = ?, `css` = ?
 	WHERE `id` = ?
 	');
-	$stmt->bind_param('siiiidi', $title, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $id);
+	$stmt->bind_param('siiiidsi', $title, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $css, $id);
 	$stmt->execute();
 	$stmt->close();
 }
@@ -669,7 +670,8 @@ if (is_post('game_update')) {
 	$reward_success = post_int('reward_success');
 	$reward_conquest = post_int('reward_conquest');
 	$reward_rate = post_float('reward_rate');
-	game_update($id, $title, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate);
+	$css = post_string_nullable('css');
+	game_update($id, $title, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $css);
 	attempt_delete_by_range($game_start, $game_stop, $id);
 	json([
 		'game' => game_select_by_id($id),

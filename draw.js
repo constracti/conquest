@@ -238,6 +238,8 @@ const state = await (async () => {
 
 document.title = `${translate('Draw')} | ${state.game.title ?? app_name}`;
 
+document.getElementById('game-style').innerHTML = state.game.css ?? '';
+
 document.getElementById('game-heading').innerHTML = state.game.title ?? app_name;
 
 document.getElementById('page-heading').innerHTML = translate('Draw');

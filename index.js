@@ -83,6 +83,7 @@ function render_game() {
 	reward_conquest_input.value = state.game.reward_conquest.toFixed();
 	reward_rate_input.value = state.game.reward_rate.toString();
 	reward_rate_input.dispatchEvent(new Event('change'));
+	css_textarea.value = state.game.css ?? '';
 }
 
 function render_map() {
@@ -1176,6 +1177,11 @@ const reward_rate_preview = document.getElementById('reward-rate-preview');
 		reward_rate_preview.innerHTML = reward_rate_end.toFixed(2);
 	});
 });
+
+/**
+ * @type {HTMLTextAreaElement}
+ */
+const css_textarea = document.getElementById('css-textarea');
 
 /**
  * @type {HTMLDivElement}
