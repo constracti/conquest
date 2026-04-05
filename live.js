@@ -1,4 +1,4 @@
-import { api, app_name, exit, human_duration, run, score_conquest, score_success, team_badge, translate } from './common.js';
+import { api, app_name, exit, human_duration, run, score_conquest, score_success, team_badge, translate, translate_parse } from './common.js';
 import { n } from './element.js';
 
 /**
@@ -50,6 +50,7 @@ import { n } from './element.js';
  * @typedef State
  * @type {object}
  * @property {Game} game
+ * @property {?Map<string, string>} lexicon
  * @property {Map<number, Polygon>} polygon_map
  * @property {Station[]} station_list
  * @property {Map<number, Station>} station_map
@@ -195,7 +196,7 @@ function render() {
 			score_map_by_team.set(team.id, score_map_by_team.get(team.id) / team.players);
 	});
 	const score_max = Math.max(1, ...score_map_by_team.values());
-	score_heading.innerHTML = translate('Score');
+	score_heading.innerHTML = translate('Score', state.lexicon);
 	score_list.innerHTML = '';
 	score_list.append(...state.team_list.toSorted((lhs, rhs) => score_map_by_team.get(lhs.id) - score_map_by_team.get(rhs.id)).toReversed().map(team => {
 		const score = score_map_by_team.get(team.id);
@@ -228,7 +229,7 @@ function render() {
 		});
 	}));
 	// history
-	history_heading.innerHTML = translate('Successes');
+	history_heading.innerHTML = translate('Successes', state.lexicon);
 	history_list.innerHTML = '';
 	state.attempt_list.toReversed().forEach(attempt => {
 		const type = state.attempt_type_map.get(attempt.id);
@@ -244,7 +245,7 @@ function render() {
 					content: [
 						n({
 							class: 'm-1',
-							content: translate(type),
+							content: translate(type, state.lexicon),
 						}),
 						n({
 							class: 'm-1',
@@ -329,6 +330,7 @@ async function server_loop() {
 	const station_map = new Map(result.station_list.map(station => [station.id, station]));
 	state = {
 		game: result.game,
+		lexicon: translate_parse(result.game.translation),
 		polygon_map: new Map(result.polygon_list.map(polygon => [polygon.id, polygon])),
 		station_list: result.station_list,
 		station_map: station_map,
@@ -352,11 +354,11 @@ function timer_loop() {
 		return;
 	const time = state.time_offset + Date.now() / 1000;
 	if (time < state.game.game_start)
-		timer_div.innerHTML = `${translate('Game start')}: ${human_duration(state.game.game_start - time)}`;
+		timer_div.innerHTML = `${translate('Game start', state.lexicon)}: ${human_duration(state.game.game_start - time)}`;
 	else if (time < state.game.game_stop)
-		timer_div.innerHTML = `${translate('Game stop')}: ${human_duration(state.game.game_stop - time)}`;
+		timer_div.innerHTML = `${translate('Game stop', state.lexicon)}: ${human_duration(state.game.game_stop - time)}`;
 	else
-		timer_div.innerHTML = `${translate('Game over')}.`;
+		timer_div.innerHTML = translate('Game over!', state.lexicon);
 	timer_div.classList.remove('d-none');
 }
 setInterval(timer_loop, 1000);

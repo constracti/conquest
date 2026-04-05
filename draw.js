@@ -1,4 +1,4 @@
-import { api, app_name, run, team_badge, translate } from './common.js';
+import { api, app_name, run, team_badge, translate, translate_parse } from './common.js';
 import { n } from './element.js';
 
 /**
@@ -100,11 +100,11 @@ function render() {
 				content: [
 					n({
 						class: 'badge text-bg-info m-2',
-						content: `${translate('Position')}: ${index + 1}`,
+						content: `${translate('Position', state.lexicon)}: ${index + 1}`,
 					}),
 					n({
 						class: 'badge text-bg-info m-2',
-						content: `${translate('Count')}: ${player_list.length}`,
+						content: `${translate('Count', state.lexicon)}: ${player_list.length}`,
 					}),
 				],
 			}));
@@ -122,7 +122,7 @@ function render() {
 							backgroundColor: team.background_color,
 							width: `${(score / score_sum * 100).toFixed(2)}%`,
 						},
-						title: `${player.name} ${translate('from')} ${team.name}`,
+						title: `${player.name} ${translate('from', state.lexicon)} ${team.name}`,
 					});
 				}),
 			}));
@@ -154,7 +154,7 @@ function render() {
 						});
 						render();
 					},
-					content: translate('Draw'),
+					content: translate('Draw', state.lexicon),
 				}) : n({
 					tag: 'button',
 					class: 'btn btn-primary m-2',
@@ -162,7 +162,7 @@ function render() {
 						state.winner_list.push(null);
 						render();
 					},
-					content: translate('Next'),
+					content: translate('Next', state.lexicon),
 				});
 				main_div.append(n({
 					class: 'd-flex flex-row',
@@ -190,6 +190,7 @@ function render() {
  * @typedef State
  * @type {object}
  * @property {Game} game
+ * @property {?Map<string, string>} lexicon
  * @property {Map<number, Team>} team_map
  * @property {Player[]} player_list
  * @property {Map<number, number>} player_score_map
@@ -228,6 +229,7 @@ const state = await (async () => {
 	});
 	return {
 		game: result.game,
+		lexicon: translate_parse(result.game.translation),
 		team_map: new Map(result.team_list.map(team => [team.id, team])),
 		player_list: result.player_list,
 		player_score_map: player_score_map,
@@ -236,26 +238,26 @@ const state = await (async () => {
 	};
 })();
 
-document.title = `${translate('Draw')} | ${state.game.title ?? app_name}`;
+document.title = `${translate('Draw', state.lexicon)} | ${state.game.title ?? app_name}`;
 
 document.getElementById('game-style').innerHTML = state.game.css ?? '';
 
 document.getElementById('game-heading').innerHTML = state.game.title ?? app_name;
 
-document.getElementById('page-heading').innerHTML = translate('Draw');
+document.getElementById('page-heading').innerHTML = translate('Draw', state.lexicon);
 
-document.getElementById('score-heading').innerHTML = translate('Score');
+document.getElementById('score-heading').innerHTML = translate('Successes', state.lexicon);
 
-score_button.innerHTML = translate('Hide');
+score_button.innerHTML = translate('Hide', state.lexicon);
 score_button.addEventListener('click', () => {
 	if (histogram_div.classList.contains('d-none')) {
 		histogram_div.classList.remove('d-none');
 		threshold_form.classList.remove('d-none');
-		score_button.innerHTML = translate('Hide');
+		score_button.innerHTML = translate('Hide', state.lexicon);
 	} else {
 		histogram_div.classList.add('d-none');
 		threshold_form.classList.add('d-none');
-		score_button.innerHTML = translate('Show');
+		score_button.innerHTML = translate('Show', state.lexicon);
 	}
 });
 
@@ -267,8 +269,8 @@ threshold_form.addEventListener('submit', event => {
 	render();
 });
 
-threshold_input.previousElementSibling.innerHTML = translate('Minimum score');
+threshold_input.previousElementSibling.innerHTML = translate('Minimum successes', state.lexicon);
 
-document.getElementById('threshold-submit').innerHTML = translate('Submit');
+document.getElementById('threshold-submit').innerHTML = translate('Submit', state.lexicon);
 
 render();

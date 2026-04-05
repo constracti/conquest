@@ -16,6 +16,7 @@ import { n } from './element.js';
  * @property {number} reward_rate
  * @property {?string} map
  * @property {?string} css
+ * @property {?string} translation
  */
 
 /**
@@ -98,7 +99,32 @@ export function exit() {
  */
 export const app_name = await api.get('app_name');
 
-// TODO translate game
+/**
+ * @param {?string} translation
+ * @returns {?Map<string, string>}
+ */
+export function translate_parse(translation) {
+	if (translation === null)
+		return null;
+	/**
+	 * @type {Map<string, string>}
+	 */
+	const lexicon = new Map();
+	let phrase = null;
+	translation.split(/\r\n|\r|\n/).forEach(line => {
+		if (line === '') {
+			phrase = null;
+			return;
+		}
+		if (phrase === null) {
+			phrase = line;
+			return;
+		}
+		lexicon.set(phrase, line);
+		phrase = null;
+	});
+	return lexicon;
+}
 
 /**
  * @param {string} phrase

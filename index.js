@@ -84,6 +84,7 @@ function render_game() {
 	reward_rate_input.value = state.game.reward_rate.toString();
 	reward_rate_input.dispatchEvent(new Event('change'));
 	css_textarea.value = state.game.css ?? '';
+	translation_textarea.value = state.game.translation ?? '';
 }
 
 function render_map() {
@@ -1182,6 +1183,11 @@ const reward_rate_preview = document.getElementById('reward-rate-preview');
  * @type {HTMLTextAreaElement}
  */
 const css_textarea = document.getElementById('css-textarea');
+
+/**
+ * @type {HTMLTextAreaElement}
+ */
+const translation_textarea = document.getElementById('translation-textarea');
 
 /**
  * @type {HTMLDivElement}

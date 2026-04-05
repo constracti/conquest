@@ -1,4 +1,4 @@
-import { api, app_name, exit, human_duration, run, score_conquest, score_success, team_badge, translate } from './common.js';
+import { api, app_name, exit, human_duration, run, score_conquest, score_success, team_badge, translate, translate_parse } from './common.js';
 import { n } from './element.js';
 
 /**
@@ -152,7 +152,7 @@ function render() {
 			score_map_by_team.set(team.id, score_map_by_team.get(team.id) / team.players);
 	});
 	const score_max = Math.max(1, ...score_map_by_team.values());
-	score_heading.innerHTML = translate('Score');
+	score_heading.innerHTML = translate('Score', state.lexicon);
 	score_list.innerHTML = '';
 	score_list.append(...state.team_list.toSorted((lhs, rhs) => score_map_by_team.get(lhs.id) - score_map_by_team.get(rhs.id)).toReversed().map(team => {
 		const score = score_map_by_team.get(team.id);
@@ -185,7 +185,7 @@ function render() {
 		});
 	}));
 	// history
-	history_heading.innerHTML = translate('Successes');
+	history_heading.innerHTML = translate('Successes', state.lexicon);
 	history_list.innerHTML = '';
 	state.attempt_list.toReversed().forEach(attempt => {
 		const type = state.attempt_type_map.get(attempt.id);
@@ -201,7 +201,7 @@ function render() {
 					content: [
 						n({
 							class: 'm-1',
-							content: translate(type),
+							content: translate(type, state.lexicon),
 						}),
 						n({
 							class: 'm-1',
@@ -277,6 +277,7 @@ function station_render() {
  * @typedef State
  * @type {object}
  * @property {Game} game
+ * @property {?Map<string, string>} lexicon
  * @property {Map<number, Polygon>} polygon_map
  * @property {Station[]} station_list
  * @property {Map<number, Station>} station_map
@@ -312,6 +313,7 @@ const state = await (async () => {
 	const simulation = run(result.station_list, result.attempt_list, result.game.game_start);
 	return {
 		game: result.game,
+		lexicon: translate_parse(result.game.translation),
 		polygon_map: new Map(result.polygon_list.map(polygon => [polygon.id, polygon])),
 		station_list: result.station_list,
 		station_map: new Map(result.station_list.map(station => [station.id, station])),
@@ -335,11 +337,11 @@ document.getElementById('game-style').innerHTML = state.game.css ?? '';
 
 game_heading.innerHTML = state.game.title ?? app_name;
 
-speed_input.previousElementSibling.innerHTML = translate('Speed');
+speed_input.previousElementSibling.innerHTML = translate('Speed', state.lexicon);
 
 speed_input.value = state.speed.toFixed();
 
-document.getElementById('time-label').innerHTML = translate('Time');
+document.getElementById('time-label').innerHTML = translate('Time', state.lexicon);
 
 time_input.min = state.game.game_start.toFixed();
 time_input.max = state.time_max.toFixed();

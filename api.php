@@ -178,17 +178,19 @@ function game_update(
 	int $id, ?string $title,
 	DT $game_start, DT $game_stop,
 	int $reward_success, int $reward_conquest, float $reward_rate,
-	?string $css,
+	?string $css, ?string $translation,
 ): void {
 	global $db;
 	$game_start = $game_start->to_int();
 	$game_stop = $game_stop->to_int();
 	$stmt = $db->prepare('
 	UPDATE `game`
-	SET `title` = ?, `game_start` = ?, `game_stop` = ?, `reward_success` = ?, `reward_conquest` = ?, `reward_rate` = ?, `css` = ?
+	SET `title` = ?, `game_start` = ?, `game_stop` = ?,
+		`reward_success` = ?, `reward_conquest` = ?, `reward_rate` = ?,
+		`css` = ?, `translation` = ?
 	WHERE `id` = ?
 	');
-	$stmt->bind_param('siiiidsi', $title, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $css, $id);
+	$stmt->bind_param('siiiidssi', $title, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $css, $translation, $id);
 	$stmt->execute();
 	$stmt->close();
 }
@@ -671,7 +673,8 @@ if (is_post('game_update')) {
 	$reward_conquest = post_int('reward_conquest');
 	$reward_rate = post_float('reward_rate');
 	$css = post_string_nullable('css');
-	game_update($id, $title, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $css);
+	$translation = post_string_nullable('translation');
+	game_update($id, $title, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $css, $translation);
 	attempt_delete_by_range($game_start, $game_stop, $id);
 	json([
 		'game' => game_select_by_id($id),
