@@ -8,14 +8,26 @@
 		<link rel="stylesheet" href="font-family.css">
 		<link rel="stylesheet" href="live.css">
 	</head>
-	<body class="d-flex flex-column live">
+	<body class="d-flex flex-column timelapse">
 		<div class="position-relative m-auto p-2 p-md-0" id="canvas">
 			<section class="p-md-2" id="heading-section">
 				<h1 class="m-2 fw-bold" id="game-heading"></h1>
 			</section>
-			<section class="d-flex flex-row align-items-center p-md-2" id="status-section">
-				<div class="alert alert-secondary m-2 p-2 d-none" id="timer-div"></div>
-				<div class="spinner-border m-2 d-none" id="spinner-div"></div>
+			<section class="d-flex flex-row align-items-stretch p-md-2" id="status-section">
+				<div class="m-2">
+					<label class="form-label" for="speed-input"></label>
+					<input class="form-control" id="speed-input" type="number" min="1">
+				</div>
+				<div class="flex-grow-1 d-flex flex-column m-2">
+					<label class="form-label d-flex flex-row justify-content-between align-items-center" for="time-input">
+						<div id="time-label"></div>
+						<div id="time-div"></div>
+					</label>
+					<input class="form-range flex-grow-1" id="time-input" type="range">
+				</div>
+				<div class="d-flex flex-row align-items-end">
+					<button class="btn btn-primary m-2" id="time-button"></button>
+				</div>
 			</section>
 			<div class="position-relative m-2 m-md-0" id="map-div">
 				<img class="w-100" id="map-img">
@@ -35,6 +47,6 @@
 				</div>
 			</section>
 		</div>
-		<script type="module" src="./live.js"></script>
+		<script type="module" src="./timelapse.js"></script>
 	</body>
 </html>

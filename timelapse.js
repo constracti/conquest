@@ -36,40 +36,6 @@ import { n } from './element.js';
  */
 
 /**
- * @typedef Result
- * @type {object}
- * @property {Game} game
- * @property {Polygon[]} polygon_list
- * @property {Station[]} station_list
- * @property {Team[]} team_list
- * @property {Attempt[]} attempt_list
- * @property {number} time
- */
-
-/**
- * @typedef State
- * @type {object}
- * @property {Game} game
- * @property {Map<number, Polygon>} polygon_map
- * @property {Station[]} station_list
- * @property {Map<number, Station>} station_map
- * @property {Team[]} team_list
- * @property {Map<number, Team>} team_map
- * @property {Attempt[]} attempt_list
- * @property {number} time
- * @property {number} time_offset
- * @property {Map<number, ?Conqueror>} conqueror_map by station
- * @property {Conquest[]} conquest_list
- * @property {Map<number, ?string>} attempt_type_map
- * @property {?number} station
- */
-
-/**
- * @type {?State}
- */
-let state = null;
-
-/**
  * @type {HTMLDivElement}
  */
 const canvas = document.getElementById('canvas');
@@ -87,17 +53,27 @@ const map_img = document.getElementById('map-img');
 /**
  * @type {SVGSVGElement}
  */
-const svg = document.getElementById('svg'); // TODO stroke does not scale uniformly
+const svg = document.getElementById('svg');
+
+/**
+ * @type {HTMLInputElement}
+ */
+const speed_input = document.getElementById('speed-input');
 
 /**
  * @type {HTMLDivElement}
  */
-const spinner_div = document.getElementById('spinner-div');
+const time_div = document.getElementById('time-div');
 
 /**
- * @type {HTMLDivElement}
+ * @type {HTMLInputElement}
  */
-const timer_div = document.getElementById('timer-div');
+const time_input = document.getElementById('time-input');
+
+/**
+ * @type {HTMLButtonElement}
+ */
+const time_button = document.getElementById('time-button');
 
 /**
  * @type {HTMLHeadingElement}
@@ -125,19 +101,6 @@ const history_list = document.getElementById('history-list');
 const station_popup = document.getElementById('station-popup');
 
 function render() {
-	if (state === null)
-		return;
-	// title
-	document.title = state.game.title ?? app_name;
-	game_heading.innerHTML = state.game.title ?? app_name;
-	// map
-	if (state.game.map !== null) {
-		canvas.classList.remove('map-null');
-		map_img.src = state.game.map;
-	} else {
-		canvas.classList.add('map-null');
-		map_img.src = '';
-	}
 	// svg
 	svg.innerHTML = '';
 	svg.append(...state.station_list.map(station => {
@@ -267,9 +230,12 @@ function render() {
 	station_render();
 }
 
+function control_render() {
+	time_div.innerHTML = human_duration(state.time_now - state.game.game_start);
+	time_button.innerHTML = state.timer_id !== null ? '&#x23F8;' : '&#x23F5;';
+}
+
 function station_render() {
-	if (state === null)
-		return;
 	station_popup.innerHTML = '';
 	if (state.station === null)
 		return;
@@ -296,62 +262,152 @@ function station_render() {
 	}));
 }
 
-async function server_loop() {
-	if (!spinner_div.classList.contains('d-none'))
-		return;
-	spinner_div.classList.remove('d-none');
+/**
+ * @typedef Result
+ * @type {object}
+ * @property {Game} game
+ * @property {Polygon[]} polygon_list
+ * @property {Station[]} station_list
+ * @property {Team[]} team_list
+ * @property {Attempt[]} attempt_list
+ * @property {number} time
+ */
+
+/**
+ * @typedef State
+ * @type {object}
+ * @property {Game} game
+ * @property {Map<number, Polygon>} polygon_map
+ * @property {Station[]} station_list
+ * @property {Map<number, Station>} station_map
+ * @property {Team[]} team_list
+ * @property {Map<number, Team>} team_map
+ * @property {Attempt[]} attempt_list
+ * @property {number} speed
+ * @property {number} time_max
+ * @property {number} time_now
+ * @property {?number} timer_id
+ * @property {Map<number, ?Conqueror>} conqueror_map by station
+ * @property {Conquest[]} conquest_list
+ * @property {Map<number, ?string>} attempt_type_map
+ * @property {?number} station
+ */
+
+/**
+ * @type {State}
+ */
+const state = await (async () => {
 	const search_params = new URLSearchParams(location.search);
 	const game = search_params.get('game');
-	if (game === null) {
-		state = null;
+	if (game === null)
 		exit();
-	}
 	const form_data = new FormData();
 	form_data.append('game', game);
 	/**
 	 * @type {?Result}
 	 */
 	const result = await api.post('live', form_data);
-	if (result === null) {
-		state = null;
+	if (result === null)
 		exit();
-	}
-	spinner_div.classList.add('d-none');
-	const time = result.time < result.game.game_start ? result.game.game_start : (result.time < result.game.game_stop ? result.time : result.game.game_stop);
-	const time_offset = result.time - Date.now() / 1000;
-	const simulation = run(result.station_list, result.attempt_list, time);
-	const station_map = new Map(result.station_list.map(station => [station.id, station]));
-	state = {
+	const simulation = run(result.station_list, result.attempt_list, result.game.game_start);
+	return {
 		game: result.game,
 		polygon_map: new Map(result.polygon_list.map(polygon => [polygon.id, polygon])),
 		station_list: result.station_list,
-		station_map: station_map,
+		station_map: new Map(result.station_list.map(station => [station.id, station])),
 		team_list: result.team_list,
 		team_map: new Map(result.team_list.map(team => [team.id, team])),
 		attempt_list: result.attempt_list,
-		time: result.time,
-		time_offset: time_offset,
+		speed: 60,
+		time_max: result.time < result.game.game_stop ? result.time : result.game.game_stop,
+		time_now: result.game.game_start,
+		timer_id: null,
 		conqueror_map: simulation.conqueror_map,
 		conquest_list: simulation.conquest_list,
 		attempt_type_map: simulation.attempt_type_map,
-		station: state !== null && state.station !== null && station_map.has(state.station) ? state.station : null,
+		station: null,
 	};
-	render();
-}
-setInterval(server_loop, 10000);
-server_loop();
+})();
 
-function timer_loop() {
-	if (state === null)
-		return;
-	const time = state.time_offset + Date.now() / 1000;
-	if (time < state.game.game_start)
-		timer_div.innerHTML = `${translate('Game start')}: ${human_duration(state.game.game_start - time)}`;
-	else if (time < state.game.game_stop)
-		timer_div.innerHTML = `${translate('Game stop')}: ${human_duration(state.game.game_stop - time)}`;
-	else
-		timer_div.innerHTML = `${translate('Game over')}.`;
-	timer_div.classList.remove('d-none');
+document.title = state.game.title ?? app_name;
+
+game_heading.innerHTML = state.game.title ?? app_name;
+
+speed_input.previousElementSibling.innerHTML = translate('Speed');
+
+speed_input.value = state.speed.toFixed();
+
+document.getElementById('time-label').innerHTML = translate('Time');
+
+time_input.min = state.game.game_start.toFixed();
+time_input.max = state.time_max.toFixed();
+time_input.value = state.game.game_start.toFixed();
+
+if (state.game.map !== null) {
+	canvas.classList.remove('map-null');
+	map_img.src = state.game.map;
+} else {
+	canvas.classList.add('map-null');
+	map_img.src = '';
 }
-setInterval(timer_loop, 1000);
-timer_loop();
+
+control_render();
+render();
+
+speed_input.addEventListener('change', () => {
+	const speed = parseInt(speed_input.value);
+	if (isNaN(speed) || speed < 1)
+		return;
+	state.speed = speed;
+});
+
+time_input.addEventListener('input', () => {
+	const time_now = parseInt(time_input.value);
+	if (isNaN(time_now) || time_now < state.game.game_start || time_now > state.time_max)
+		return;
+	state.time_now = time_now;
+	const simulation = run(state.station_list, state.attempt_list, state.time_now);
+	state.conqueror_map = simulation.conqueror_map;
+	state.conquest_list = simulation.conquest_list;
+	state.attempt_type_map = simulation.attempt_type_map;
+	control_render();
+	render();
+});
+
+time_button.addEventListener('click', () => {
+	if (state.timer_id === null) {
+		// play
+		const restart = state.time_now === state.time_max;
+		if (restart) {
+			state.time_now = state.game.game_start;
+			time_input.value = state.time_now.toFixed();
+			const simulation = run(state.station_list, state.attempt_list, state.time_now);
+			state.conqueror_map = simulation.conqueror_map;
+			state.conquest_list = simulation.conquest_list;
+			state.attempt_type_map = simulation.attempt_type_map;
+		}
+		state.timer_id = setInterval(() => {
+			state.time_now += state.speed;
+			if (state.time_now >= state.time_max) {
+				state.time_now = state.time_max;
+				clearInterval(state.timer_id);
+				state.timer_id = null;
+			}
+			time_input.value = state.time_now.toFixed();
+			const simulation = run(state.station_list, state.attempt_list, state.time_now);
+			state.conqueror_map = simulation.conqueror_map;
+			state.conquest_list = simulation.conquest_list;
+			state.attempt_type_map = simulation.attempt_type_map;
+			control_render();
+			render();
+		}, 1000);
+		control_render();
+		if (restart)
+			render();
+	} else {
+		// pause
+		clearInterval(state.timer_id);
+		state.timer_id = null;
+		control_render();
+	}
+});
