@@ -606,6 +606,8 @@ if (is_get('app_name')) {
 	json(APP_NAME);
 }
 
+// TODO strip html from strings
+
 if (is_post('game_register')) {
 	$name = post_slug('name');
 	if (!is_null(game_identify_by_name($name)))

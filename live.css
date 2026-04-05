@@ -31,10 +31,6 @@
 /* medium (md) bootstrap breakpoint */
 @media (min-width: 768px) {
 
-	#canvas {
-		position: relative;
-	}
-
 	#canvas.map-null #map-div {
 		width: 100vw;
 		height: 100vh;
@@ -57,6 +53,12 @@
 	#canvas #status-section #timer-div {
 		order: 1;
 	}
+	#canvas #status-section #speed-input {
+		width: 5rem;
+	}
+	#canvas #status-section #time-button {
+		width: 2.5rem;
+	}
 
 	#canvas #score-section {
 		top: var(--canvas-top);
@@ -72,7 +74,7 @@
 		width: var(--canvas-width);
 	}
 
-	#canvas .alert {
+	#canvas #status-section .alert {
 		background-color: rgb(from var(--bs-alert-bg) r g b / 50%);
 	}
 	#canvas #station-popup .alert {
