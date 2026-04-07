@@ -661,6 +661,7 @@ if (is_get('app_name')) {
 }
 
 // TODO strip html from strings
+// TODO auto-delete old games
 
 if (is_post('game_register')) {
 	$name = post_slug('name');
