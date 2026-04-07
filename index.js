@@ -1387,7 +1387,32 @@ chpass_form.addEventListener('submit', async event => {
 	localStorage.setItem('password', form_data.get('new_password'));
 	state.password = form_data.get('new_password');
 	spinner_div.classList.add('d-none');
-	render();
+});
+
+/**
+ * @type {HTMLFormElement}
+ */
+const clone_form = document.getElementById('clone-form');
+
+clone_form.addEventListener('submit', async event => {
+	event.preventDefault();
+	if (!spinner_div.classList.contains('d-none'))
+		return;
+	spinner_div.classList.remove('d-none');
+	const form_data = new FormData(event.currentTarget);
+	form_data.append('id', state.game.id.toFixed());
+	form_data.append('password', state.password);
+	/**
+	 * @type {boolean}
+	 */
+	const result = await api.post('game_clone', form_data);
+	if (!result) {
+		alert('Identifier is not available.');
+		spinner_div.classList.add('d-none');
+		return;
+	}
+	clone_form.reset();
+	spinner_div.classList.add('d-none');
 });
 
 await (async () => {

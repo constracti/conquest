@@ -99,6 +99,31 @@ function move_file(string $temp_path, string $upload_dir, string $file_name): st
 	return $file_path;
 }
 
+function copy_file(string $prev_path, string $upload_dir, string $file_name): string {
+	// prev_path
+	if (!is_file($prev_path))
+		exit('copy_file: prev_path');
+	// upload_dir
+	if ($upload_dir !== 'maps')
+		exit('copy_file: upload_dir');
+	// file_name
+	if ($file_name !== basename($file_name))
+		exit('copy_file: file_name');
+	if (str_starts_with($file_name, '.'))
+		exit('copy_file: file_name');
+	// run
+	$file_path = sprintf('%s/%s', $upload_dir, $file_name);
+	if (!file_exists($upload_dir)) {
+		if (mkdir($upload_dir) === FALSE)
+			exit('copy_file: mkdir');
+	} elseif (!is_dir($upload_dir)) {
+		exit('copy_file: is_dir');
+	}
+	if (copy($prev_path, $file_path) === FALSE)
+		exit('copy_file: copy');
+	return $file_path;
+}
+
 // game
 
 function game_select_by_id(int $id): ?array {
@@ -158,16 +183,17 @@ function game_insert(
 	string $name, ?string $title, string $password,
 	DT $game_start, DT $game_stop,
 	int $reward_success, int $reward_conquest, float $reward_rate,
+	?string $css, ?string $translation,
 ): int {
 	global $db;
 	$hash = password_hash($password, PASSWORD_DEFAULT);
 	$game_start = $game_start->to_int();
 	$game_stop = $game_stop->to_int();
 	$stmt = $db->prepare('
-	INSERT INTO `game` (`name`, `title`, `hash`, `game_start`, `game_stop`, `reward_success`, `reward_conquest`, `reward_rate`)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	INSERT INTO `game` (`name`, `title`, `hash`, `game_start`, `game_stop`, `reward_success`, `reward_conquest`, `reward_rate`, `css`, `translation`)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	');
-	$stmt->bind_param('sssiiiid', $name, $title, $hash, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate);
+	$stmt->bind_param('sssiiiidss', $name, $title, $hash, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $css, $translation);
 	$stmt->execute();
 	$id = $stmt->insert_id;
 	$stmt->close();
@@ -235,12 +261,14 @@ function polygon_count_stations(int $id): int {
 	return stmt_cell($stmt);
 }
 
-function polygon_insert(string $name, ?string $content, int $game): void {
+function polygon_insert(string $name, ?string $content, int $game): int {
 	global $db;
 	$stmt = $db->prepare('INSERT INTO `polygon` (`name`, `content`, `game`) VALUES (?, ?, ?)');
 	$stmt->bind_param('ssi', $name, $content, $game);
 	$stmt->execute();
+	$id = $stmt->insert_id;
 	$stmt->close();
+	return $id;
 }
 
 function polygon_update(int $id, string $name, ?string $content): void {
@@ -310,15 +338,17 @@ function station_count_attempts(int $id): int {
 function station_insert(
 	string $name, string $code, ?int $polygon,
 	int $capacity, bool $score_sign, ?int $score_base, ?int $score_high, int $game,
-): void {
+): int {
 	global $db;
 	$stmt = $db->prepare('
 	INSERT INTO `station` (`name`, `code`, `polygon`, `capacity`, `score_sign`, `score_base`, `score_high`, `game`)
-	VALUES (?, ?, ?, ?, ?)
+	VALUES (?, ?, ?, ?, ?, ?, ? , ?)
 	');
 	$stmt->bind_param('ssiiiiii', $name, $code, $polygon, $capacity, $score_sign, $score_base, $score_high, $game);
 	$stmt->execute();
+	$id = $stmt->insert_id;
 	$stmt->close();
+	return $id;
 }
 
 function station_update(
@@ -395,12 +425,14 @@ function team_count_attempts(int $id): int {
 	return stmt_cell($stmt);
 }
 
-function team_insert(string $name, string $background_color, string $text_color, int $game): void {
+function team_insert(string $name, string $background_color, string $text_color, int $game): int {
 	global $db;
 	$stmt = $db->prepare('INSERT INTO `team` (`name`, `background_color`, `text_color`, `game`) VALUES (?, ?, ?, ?)');
 	$stmt->bind_param('sssi', $name, $background_color, $text_color, $game);
 	$stmt->execute();
+	$id = $stmt->insert_id;
 	$stmt->close();
+	return $id;
 }
 
 function team_update(int $id, string $name, string $background_color, string $text_color): void {
@@ -456,12 +488,14 @@ function player_count_attempts(int $id): int {
 	return stmt_cell($stmt);
 }
 
-function player_insert(string $name, string $mark, int $team, int $game): void {
+function player_insert(string $name, string $mark, int $team, int $game): int {
 	global $db;
 	$stmt = $db->prepare('INSERT INTO `player` (`name`, `mark`, `team`, `game`) VALUES (?, ?, ?, ?)');
 	$stmt->bind_param('ssii', $name, $mark, $team, $game);
 	$stmt->execute();
+	$id = $stmt->insert_id;
 	$stmt->close();
+	return $id;
 }
 
 function player_update(int $id, string $name, string $mark, int $team): void {
@@ -635,7 +669,9 @@ if (is_post('game_register')) {
 	$reward_success = 300;
 	$reward_conquest = 140;
 	$reward_rate = 0.0;
-	$id = game_insert($name, $title, $password, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate);
+	$css = NULL;
+	$translation = NULL;
+	$id = game_insert($name, $title, $password, $game_start, $game_stop, $reward_success, $reward_conquest, $reward_rate, $css, $translation);
 	json([
 		'game' => game_select_by_id($id),
 		'polygon_list' => polygon_select_by_game($id),
@@ -664,7 +700,7 @@ if (is_post('game_login')) {
 	]);
 }
 
-// TODO manage game: delete, clone
+// TODO delete game
 
 if (is_post('game_update')) {
 	$id = post_int('id');
@@ -730,6 +766,52 @@ if (is_post('game_password_update')) {
 	game_password_update($id, $new_password);
 	json(NULL);
 }
+
+if (is_post('game_clone')) {
+	$id = post_int('id');
+	$password = post_string('password');
+	if (!game_matches($id, $password))
+		exit('password');
+	$name = post_slug('name');
+	if (!is_null(game_identify_by_name($name)))
+		json(FALSE);
+	$game = game_select_by_id($id);
+	$new = game_insert(
+		$name, $game['title'], $password,
+		DT::from_int($game['game_start']), DT::from_int($game['game_stop']),
+		$game['reward_success'], $game['reward_conquest'], $game['reward_rate'],
+		$game['css'], $game['translation'],
+	);
+	if (!is_null($game['map'])) {
+		$map = copy_file($game['map'], 'maps', sprintf('%s-%d.%s', $name, time(), pathinfo($game['map'], PATHINFO_EXTENSION)));
+		game_map_update($new, $map);
+	}
+	$polygon_map = [];
+	foreach (polygon_select_by_game($id) as $polygon)
+		$polygon_map[$polygon['id']] = polygon_insert($polygon['name'], $polygon['content'], $new);
+	foreach (station_select_by_game($id, TRUE) as $station) {
+		$polygon = $station['polygon'];
+		if (!is_null($polygon))
+			$polygon = $polygon_map[$polygon];
+		station_insert(
+			$station['name'], $station['code'], $polygon, $station['capacity'],
+			$station['score_sign'], $station['score_base'], $station['score_high'],
+			$new,
+		);
+	}
+	$team_map = [];
+	foreach (team_select_by_game($id) as $team)
+		$team_map[$team['id']] = team_insert($team['name'], $team['background_color'], $team['text_color'], $new);
+	foreach (player_select_by_game($id) as $player) {
+		$team = $player['team'];
+		if (!is_null($team))
+			$team = $team_map[$team];
+		player_insert($player['name'], $player['mark'], $team, $new);
+	}
+	json(TRUE);
+}
+
+// TODO remember to delete map with game
 
 if (is_post('polygon_insert')) {
 	$game = post_int('game');
