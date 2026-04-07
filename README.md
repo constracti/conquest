@@ -21,6 +21,13 @@ TODO game description and documentation
 	--bs-body-font-family: PFSynchPro;
 }
 
+#canvas {
+	--canvas-top: 10%;
+	--canvas-left: 0%;
+	--canvas-right: 0%;
+	--canvas-width: 20%;
+}
+
 @media (min-width: 768px) {
 	body.timelapse #canvas #status-section {
 		width: 70%;
@@ -36,12 +43,12 @@ TODO game description and documentation
 - `Game over!` game state
 - `Game start` game state
 - `Game stop` game state
-- `Hide` visibility toggle state
+- `Hide` visibility toggle action
 - `Minimum successes` threshold of draw process
 - `Next` draw action
 - `Position` draw position
 - `Score` team ranking
-- `Show` visibility toggle state
+- `Show` visibility toggle action
 - `Speed` timelapse frames per second
 - `Submit` draw action
 - `Successes` list of attempts

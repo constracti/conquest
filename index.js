@@ -71,6 +71,8 @@ function render() {
 	render_team();
 	render_player();
 	attempt_truncate.disabled = state.attempt_list.length === 0;
+	live_link.href = `live.html?game=${state.game.name}`;
+	timelapse_link.href = `timelapse.html?game=${state.game.name}`;
 }
 
 function render_game() {
@@ -1340,6 +1342,16 @@ attempt_truncate.addEventListener('click', async () => {
 	spinner_div.classList.add('d-none');
 	render();
 });
+
+/**
+ * @type {HTMLAnchorElement}
+ */
+const live_link = document.getElementById('live-link');
+
+/**
+ * @type {HTMLAnchorElement}
+ */
+const timelapse_link = document.getElementById('timelapse-link');
 
 await (async () => {
 	const name = localStorage.getItem('name');

@@ -1,11 +1,3 @@
-:root {
-	--canvas-top: 10%;
-	--canvas-left: 0%;
-	--canvas-right: 1.3%;
-	--canvas-width: 20%;
-}
-
-
 #canvas #svg {
 	top: 0%;
 	left: 0%;
