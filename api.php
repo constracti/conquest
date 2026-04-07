@@ -238,6 +238,14 @@ function game_password_update(int $id, string $password): void {
 	$stmt->close();
 }
 
+function game_delete(int $id): void {
+	global $db;
+	$stmt = $db->prepare('DELETE FROM `game` WHERE `id` = ?');
+	$stmt->bind_param('i', $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
 // polygon
 
 function polygon_select_by_game(int $game): array {
@@ -700,8 +708,6 @@ if (is_post('game_login')) {
 	]);
 }
 
-// TODO delete game
-
 if (is_post('game_update')) {
 	$id = post_int('id');
 	$password = post_string('password');
@@ -811,7 +817,20 @@ if (is_post('game_clone')) {
 	json(TRUE);
 }
 
-// TODO remember to delete map with game
+if (is_post('game_delete')) {
+	$id = post_int('id');
+	$password = post_string('password');
+	if (!game_matches($id, $password))
+		exit('password');
+	$game = game_select_by_id($id);
+	if (!is_null($game['map'])) {
+		if (unlink($game['map']) === FALSE)
+			exit('unlink');
+		game_map_update($id, NULL);
+	}
+	game_delete($id);
+	json(NULL);
+}
 
 if (is_post('polygon_insert')) {
 	$game = post_int('game');

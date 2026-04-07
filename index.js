@@ -1322,28 +1322,6 @@ import_cancel.addEventListener('click', () => {
 });
 
 /**
- * @type {HTMLButtonElement}
- */
-const attempt_truncate = document.getElementById('attempt-truncate');
-
-attempt_truncate.addEventListener('click', async () => {
-	if (!spinner_div.classList.contains('d-none'))
-		return;
-	spinner_div.classList.remove('d-none');
-	if (!confirm('Delete all attempts?')) {
-		spinner_div.classList.add('d-none');
-		return;
-	}
-	const form_data = new FormData();
-	form_data.append('game', state.game.id.toFixed());
-	form_data.append('password', state.password);
-	await api.post('attempt_truncate', form_data);
-	state.attempt_list = [];
-	spinner_div.classList.add('d-none');
-	render();
-});
-
-/**
  * @type {HTMLAnchorElement}
  */
 const live_link = document.getElementById('live-link');
@@ -1413,6 +1391,52 @@ clone_form.addEventListener('submit', async event => {
 	}
 	clone_form.reset();
 	spinner_div.classList.add('d-none');
+});
+
+/**
+ * @type {HTMLButtonElement}
+ */
+const attempt_truncate = document.getElementById('attempt-truncate');
+
+attempt_truncate.addEventListener('click', async () => {
+	if (!spinner_div.classList.contains('d-none'))
+		return;
+	spinner_div.classList.remove('d-none');
+	if (!confirm('Delete all attempts?')) {
+		spinner_div.classList.add('d-none');
+		return;
+	}
+	const form_data = new FormData();
+	form_data.append('game', state.game.id.toFixed());
+	form_data.append('password', state.password);
+	await api.post('attempt_truncate', form_data);
+	state.attempt_list = [];
+	spinner_div.classList.add('d-none');
+	render();
+});
+
+/**
+ * @type {HTMLButtonElement}
+ */
+const game_delete = document.getElementById('game-delete');
+
+game_delete.addEventListener('click', async () => {
+	if (!spinner_div.classList.contains('d-none'))
+		return;
+	spinner_div.classList.remove('d-none');
+	if (!confirm(`Delete game ${state.game.name}?`)) {
+		spinner_div.classList.add('d-none');
+		return;
+	}
+	const form_data = new FormData();
+	form_data.append('id', state.game.id.toFixed());
+	form_data.append('password', state.password);
+	await api.post('game_delete', form_data);
+	localStorage.removeItem('name');
+	localStorage.removeItem('password');
+	state = null;
+	spinner_div.classList.add('d-none');
+	render();
 });
 
 await (async () => {
