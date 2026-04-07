@@ -133,7 +133,7 @@ function render_map() {
 				/**
 				 * @type {Game}
 				 */
-				const result = await api.post('game_delete_map', form_data);
+				const result = await api.post('game_map_delete', form_data);
 				state.game = result;
 				spinner_div.classList.add('d-none');
 				render();
@@ -161,7 +161,7 @@ function render_map() {
 				/**
 				 * @type {Game}
 				 */
-				const result = await api.post('game_insert_map', form_data);
+				const result = await api.post('game_map_insert', form_data);
 				state.game = result;
 				spinner_div.classList.add('d-none');
 				render();
@@ -1352,6 +1352,43 @@ const live_link = document.getElementById('live-link');
  * @type {HTMLAnchorElement}
  */
 const timelapse_link = document.getElementById('timelapse-link');
+
+/**
+ * @type {HTMLFormElement}
+ */
+const chpass_form = document.getElementById('chpass-form');
+
+/**
+ * @type {HTMLInputElement}
+ */
+const chpass_input = document.getElementById('chpass-input');
+
+/**
+ * @type {HTMLInputElement}
+ */
+const chpass_spellcheck = document.getElementById('chpass-spellcheck');
+
+chpass_form.addEventListener('submit', async event => {
+	event.preventDefault();
+	if (!spinner_div.classList.contains('d-none'))
+		return;
+	spinner_div.classList.remove('d-none');
+	if (chpass_input.value !== chpass_spellcheck.value) {
+		alert('Passwords do not match.');
+		spinner_div.classList.add('d-none');
+		chpass_spellcheck.focus();
+		return;
+	}
+	const form_data = new FormData(event.currentTarget);
+	form_data.append('id', state.game.id.toFixed());
+	form_data.append('password', state.password);
+	await api.post('game_password_update', form_data);
+	chpass_form.reset();
+	localStorage.setItem('password', form_data.get('new_password'));
+	state.password = form_data.get('new_password');
+	spinner_div.classList.add('d-none');
+	render();
+});
 
 await (async () => {
 	const name = localStorage.getItem('name');

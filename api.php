@@ -195,10 +195,19 @@ function game_update(
 	$stmt->close();
 }
 
-function game_update_map(int $id, ?string $map): void {
+function game_map_update(int $id, ?string $map): void {
 	global $db;
 	$stmt = $db->prepare('UPDATE `game` SET `map` = ? WHERE `id` = ?');
 	$stmt->bind_param('si', $map, $id);
+	$stmt->execute();
+	$stmt->close();
+}
+
+function game_password_update(int $id, string $password): void {
+	global $db;
+	$hash = password_hash($password, PASSWORD_DEFAULT);
+	$stmt = $db->prepare('UPDATE `game` SET `hash` = ? WHERE `id` = ?');
+	$stmt->bind_param('si', $hash, $id);
 	$stmt->execute();
 	$stmt->close();
 }
@@ -655,7 +664,7 @@ if (is_post('game_login')) {
 	]);
 }
 
-// TODO manage game: delete, clone, change password
+// TODO manage game: delete, clone
 
 if (is_post('game_update')) {
 	$id = post_int('id');
@@ -682,7 +691,7 @@ if (is_post('game_update')) {
 	]);
 }
 
-if (is_post('game_insert_map')) {
+if (is_post('game_map_insert')) {
 	$id = post_int('id');
 	$password = post_string('password');
 	if (!game_matches($id, $password))
@@ -694,11 +703,11 @@ if (is_post('game_insert_map')) {
 	if (!check_file($map['tmp_name'], 'image', 256 * 1024))
 		exit('map');
 	$map = move_file($map['tmp_name'], 'maps', sprintf('%s-%d.%s', $game['name'], time(), pathinfo($map['name'], PATHINFO_EXTENSION)));
-	game_update_map($id, $map);
+	game_map_update($id, $map);
 	json(game_select_by_id($id));
 }
 
-if (is_post('game_delete_map')) {
+if (is_post('game_map_delete')) {
 	$id = post_int('id');
 	$password = post_string('password');
 	if (!game_matches($id, $password))
@@ -708,8 +717,18 @@ if (is_post('game_delete_map')) {
 		exit('id');
 	if (unlink($game['map']) === FALSE)
 		exit('unlink');
-	game_update_map($id, NULL);
+	game_map_update($id, NULL);
 	json(game_select_by_id($id));
+}
+
+if (is_post('game_password_update')) {
+	$id = post_int('id');
+	$password = post_string('password');
+	if (!game_matches($id, $password))
+		exit('password');
+	$new_password = post_string('new_password');
+	game_password_update($id, $new_password);
+	json(NULL);
 }
 
 if (is_post('polygon_insert')) {

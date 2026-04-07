@@ -60,7 +60,7 @@
 				</div>
 				<div class="col-12 col-sm-6 px-0">
 					<div class="m-2">
-						<label class="form-label" for="register-spellcheck">Retype Password</label>
+						<label class="form-label" for="register-spellcheck">Retype password</label>
 						<span class="text-danger">*</span>
 						<input class="form-control" id="register-spellcheck" type="password">
 					</div>
@@ -178,15 +178,34 @@
 				</div>
 			</div>
 			<div class="m-2 list-group d-none" id="player-list"></div>
-			<div class="d-flex flex-row justify-content-between align-items-center">
-				<h3 class="m-2">Attempts</h3>
-				<button class="m-2 btn btn-danger btn-sm" id="attempt-truncate">Truncate</button>
-			</div>
 			<h3 class="m-2">Links</h3>
 			<div class="d-flex flex-row">
 				<a class="m-2 btn btn-secondary" id="live-link">Live</a>
 				<a class="m-2 btn btn-secondary" id="timelapse-link">Timelapse</a>
 				<a href="draw.html" class="m-2 btn btn-secondary">Draw</a>
+			</div>
+			<h3 class="m-2">Actions</h3>
+			<form class="m-2 border rounded d-flex flex-column p-2" id="chpass-form">
+				<h4 class="m-2">Update password</h4>
+				<div class="d-flex flex-row flex-wrap align-items-end">
+					<div class="flex-grow-1 d-flex flex-row flex-wrap">
+						<div class="m-2 flex-grow-1">
+							<label class="form-label" for="chpass-input">New password</label>
+							<span class="text-danger">*</span>
+							<input class="form-control" id="chpass-input" name="new_password" type="password" required>
+						</div>
+						<div class="m-2 flex-grow-1">
+							<label class="form-label" for="chpass-spellcheck">Retype new password</label>
+							<span class="text-danger">*</span>
+							<input class="form-control" id="chpass-spellcheck" type="password">
+						</div>
+					</div>
+					<button class="m-2 btn btn-primary">Submit</button>
+				</div>
+			</form>
+			<div class="m-2 border rounded d-flex flex-row flex-wrap align-items-center p-2">
+				<h4 class="m-2 flex-grow-1">Truncate attempts</h4>
+				<button class="m-2 btn btn-danger" id="attempt-truncate">Truncate</button>
 			</div>
 		</div>
 		<div class="modal fade" id="import-div">
