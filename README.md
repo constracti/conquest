@@ -51,10 +51,10 @@ TODO game description and documentation
 - `Show` visibility toggle action
 - `Speed` timelapse frames per second
 - `Submit` draw action
-- `Successes` list of attempts
 - `Success` attempt type
 - `Success and Conquest` attempt type
 - `Success and Neutralization` attempt type
+- `Successes` list of attempts
 - `Time` timelapse progress
 
 ```
@@ -100,9 +100,6 @@ Speed
 Submit
 Υποβολή
 
-Successes
-Επιτυχίες
-
 Success
 Επιτυχία
 
@@ -111,6 +108,9 @@ Success and Conquest
 
 Success and Neutralization
 Επιτυχία και Εξουδετέρωση
+
+Successes
+Επιτυχίες
 
 Time
 Χρόνος

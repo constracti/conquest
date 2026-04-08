@@ -152,7 +152,7 @@ function render() {
 			score_map_by_team.set(team.id, score_map_by_team.get(team.id) / team.players);
 	});
 	const score_max = Math.max(1, ...score_map_by_team.values());
-	score_heading.innerHTML = translate('Score', state.lexicon);
+	score_heading.textContent = translate('Score', state.lexicon);
 	score_list.innerHTML = '';
 	score_list.append(...state.team_list.toSorted((lhs, rhs) => score_map_by_team.get(lhs.id) - score_map_by_team.get(rhs.id)).toReversed().map(team => {
 		const score = score_map_by_team.get(team.id);
@@ -185,7 +185,7 @@ function render() {
 		});
 	}));
 	// history
-	history_heading.innerHTML = translate('Successes', state.lexicon);
+	history_heading.textContent = translate('Successes', state.lexicon);
 	history_list.innerHTML = '';
 	state.attempt_list.toReversed().forEach(attempt => {
 		const type = state.attempt_type_map.get(attempt.id);
@@ -333,15 +333,15 @@ const state = await (async () => {
 
 document.title = state.game.title ?? app_name;
 
-document.getElementById('game-style').innerHTML = state.game.css ?? '';
+document.getElementById('game-style').textContent = state.game.css ?? '';
 
-game_heading.innerHTML = state.game.title ?? app_name;
+game_heading.textContent = state.game.title ?? app_name;
 
-speed_input.previousElementSibling.innerHTML = translate('Speed', state.lexicon);
+speed_input.previousElementSibling.textContent = translate('Speed', state.lexicon);
 
 speed_input.value = state.speed.toFixed();
 
-document.getElementById('time-label').innerHTML = translate('Time', state.lexicon);
+document.getElementById('time-label').textContent = translate('Time', state.lexicon);
 
 time_input.min = state.game.game_start.toFixed();
 time_input.max = state.time_max.toFixed();

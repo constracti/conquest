@@ -240,24 +240,24 @@ const state = await (async () => {
 
 document.title = `${translate('Draw', state.lexicon)} | ${state.game.title ?? app_name}`;
 
-document.getElementById('game-style').innerHTML = state.game.css ?? '';
+document.getElementById('game-style').textContent = state.game.css ?? '';
 
-document.getElementById('game-heading').innerHTML = state.game.title ?? app_name;
+document.getElementById('game-heading').textContent = state.game.title ?? app_name;
 
-document.getElementById('page-heading').innerHTML = translate('Draw', state.lexicon);
+document.getElementById('page-heading').textContent = translate('Draw', state.lexicon);
 
-document.getElementById('score-heading').innerHTML = translate('Successes', state.lexicon);
+document.getElementById('score-heading').textContent = translate('Successes', state.lexicon);
 
-score_button.innerHTML = translate('Hide', state.lexicon);
+score_button.textContent = translate('Hide', state.lexicon);
 score_button.addEventListener('click', () => {
 	if (histogram_div.classList.contains('d-none')) {
 		histogram_div.classList.remove('d-none');
 		threshold_form.classList.remove('d-none');
-		score_button.innerHTML = translate('Hide', state.lexicon);
+		score_button.textContent = translate('Hide', state.lexicon);
 	} else {
 		histogram_div.classList.add('d-none');
 		threshold_form.classList.add('d-none');
-		score_button.innerHTML = translate('Show', state.lexicon);
+		score_button.textContent = translate('Show', state.lexicon);
 	}
 });
 
@@ -269,8 +269,8 @@ threshold_form.addEventListener('submit', event => {
 	render();
 });
 
-threshold_input.previousElementSibling.innerHTML = translate('Minimum successes', state.lexicon);
+threshold_input.previousElementSibling.textContent = translate('Minimum successes', state.lexicon);
 
-document.getElementById('threshold-submit').innerHTML = translate('Submit', state.lexicon);
+document.getElementById('threshold-submit').textContent = translate('Submit', state.lexicon);
 
 render();

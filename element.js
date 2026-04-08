@@ -47,7 +47,7 @@ export function n(options) {
 		element.className = options.class;
 	if (options.content === null) {
 	} else if (typeof(options.content) === 'string') {
-		element.innerHTML = options.content;
+		element.textContent = options.content;
 	} else {
 		for (const child of options.content)
 			element.appendChild(child);
@@ -97,7 +97,7 @@ export function n_option_list(option_list) {
 		...option_list.map(option => {
 			const select_option = document.createElement('option');
 			select_option.value = option.id.toFixed();
-			select_option.innerHTML = option.name;
+			select_option.textContent = option.name;
 			return select_option;
 		}),
 	];

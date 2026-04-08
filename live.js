@@ -135,8 +135,8 @@ function render() {
 		return;
 	// title & style
 	document.title = state.game.title ?? app_name;
-	game_style.innerHTML = state.game.css ?? '';
-	game_heading.innerHTML = state.game.title ?? app_name;
+	game_style.textContent = state.game.css ?? '';
+	game_heading.textContent = state.game.title ?? app_name;
 	// map
 	if (state.game.map !== null) {
 		canvas.classList.remove('map-null');
@@ -196,7 +196,7 @@ function render() {
 			score_map_by_team.set(team.id, score_map_by_team.get(team.id) / team.players);
 	});
 	const score_max = Math.max(1, ...score_map_by_team.values());
-	score_heading.innerHTML = translate('Score', state.lexicon);
+	score_heading.textContent = translate('Score', state.lexicon);
 	score_list.innerHTML = '';
 	score_list.append(...state.team_list.toSorted((lhs, rhs) => score_map_by_team.get(lhs.id) - score_map_by_team.get(rhs.id)).toReversed().map(team => {
 		const score = score_map_by_team.get(team.id);
@@ -229,7 +229,7 @@ function render() {
 		});
 	}));
 	// history
-	history_heading.innerHTML = translate('Successes', state.lexicon);
+	history_heading.textContent = translate('Successes', state.lexicon);
 	history_list.innerHTML = '';
 	state.attempt_list.toReversed().forEach(attempt => {
 		const type = state.attempt_type_map.get(attempt.id);
@@ -354,11 +354,11 @@ function timer_loop() {
 		return;
 	const time = state.time_offset + Date.now() / 1000;
 	if (time < state.game.game_start)
-		timer_div.innerHTML = `${translate('Game start', state.lexicon)}: ${human_duration(state.game.game_start - time)}`;
+		timer_div.textContent = `${translate('Game start', state.lexicon)}: ${human_duration(state.game.game_start - time)}`;
 	else if (time < state.game.game_stop)
-		timer_div.innerHTML = `${translate('Game stop', state.lexicon)}: ${human_duration(state.game.game_stop - time)}`;
+		timer_div.textContent = `${translate('Game stop', state.lexicon)}: ${human_duration(state.game.game_stop - time)}`;
 	else
-		timer_div.innerHTML = translate('Game over!', state.lexicon);
+		timer_div.textContent = translate('Game over!', state.lexicon);
 	timer_div.classList.remove('d-none');
 }
 setInterval(timer_loop, 1000);

@@ -63,7 +63,7 @@ function render() {
 	login_form.classList.add('d-none');
 	register_form.classList.add('d-none');
 	main_div.classList.remove('d-none');
-	name_block.innerHTML = state.game.name;
+	name_block.textContent = state.game.name;
 	render_game();
 	render_map();
 	render_polygon();
@@ -821,7 +821,12 @@ function render_player() {
 			element_list.push(
 				n({
 					class: 'm-1',
-					content: `<code>${player.mark}</code>`,
+					content: [
+						n({
+							tag: 'code',
+							content: player.mark,
+						}),
+					],
 				}),
 				n({
 					class: 'm-1 flex-grow-1',
@@ -994,7 +999,7 @@ document.getElementById('register-button').addEventListener('click', () => {
 
 document.title = app_name;
 
-document.getElementById('app-heading').innerHTML = app_name;
+document.getElementById('app-heading').textContent = app_name;
 
 /**
  * @type {HTMLInputElement}

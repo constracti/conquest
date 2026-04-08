@@ -124,7 +124,7 @@ if (home_state === null)
 
 document.title = home_state.game.title ?? app_name;
 
-document.getElementById('game-heading').innerHTML = home_state.game.title ?? app_name;
+document.getElementById('game-heading').textContent = home_state.game.title ?? app_name;
 
 /**
  * @type {HTMLDivElement}
@@ -156,11 +156,11 @@ function render() {
 	login_form.classList.add('d-none');
 	main_div.classList.remove('d-none');
 	const station = login_state.station;
-	name_heading.innerHTML = station.name;
-	capacity_badge.innerHTML = `Capacity: ${station.capacity}`;
+	name_heading.textContent = station.name;
+	capacity_badge.innerHTML = `Capacity: ${station.capacity.toFixed()}`;
 	score_sign_badge.innerHTML = score_sign_list[station.score_sign].name;
-	score_base_badge.innerHTML = station.score_base !== null ? `Score base: ${station.score_base}` : '';
-	score_high_badge.innerHTML = station.score_high !== null ? `Score high: ${station.score_high}` : '';
+	score_base_badge.innerHTML = station.score_base !== null ? `Score base: ${station.score_base.toFixed()}` : '';
+	score_high_badge.innerHTML = station.score_high !== null ? `Score high: ${station.score_high.toFixed()}` : '';
 	if (login_state.participant_list.length === station.capacity)
 		player_form.classList.add('d-none');
 	else
@@ -181,7 +181,12 @@ function render() {
 						content: [
 							n({
 								class: 'm-1',
-								content: `<code>${player.mark}</code>`,
+								content: [
+									n({
+										tag: 'code',
+										content: player.mark,
+									}),
+								],
 							}),
 						],
 					}),
@@ -249,7 +254,7 @@ function render() {
 							content: [
 								n({
 									class: 'm-1',
-									content: `${type} (<code>${attempt.score.toFixed()}</code>)`,
+									content: `${type} (${attempt.score.toFixed()})`,
 								})
 							],
 						}),
