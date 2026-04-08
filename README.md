@@ -1,33 +1,91 @@
-# conquest
+# Κατάκτηση
 
-TODO game description and documentation
+Σε αυτό το παιχνίδι η αποστολή κάθε ομάδας είναι να κατακτήσει όσο το δυνατόν περισσότερους σταθμούς, σημειώνοντας την καλύτερη επίδοση στην αντίστοιχη δοκιμασία.
 
-## custom CSS
+Οι παίκτες μπορούν να παρακολουθούν μέσω χάρτη ανά πάσα χρονική στιγμή σε ποια ομάδα ανήκει κάθε σταθμός.
 
+TODO screenshot from the-gexa-war-2025
+
+## Σύνοψη
+
+TODO pages, attempt types, point sources
+
+## Διαχείριση παιχνιδιού
+
+### Δημιουργία
+
+TODO describe name and password and move some fields from settings
+
+### Ρυθμίσεις
+
+Επιλογές που αφορούν την ταυτότητα, τη διάρκεια και άλλα χαρακτηριστικά του παιχνιδιού.
+
+**Title** Ο τίτλος που εμφανίζεται σε όλες τις δημόσιες σελίδες.
+
+#### Χρόνος
+
+Το παιχνίδι έχει προκαθορισμένη διάρκεια.
+
+**Game start**
+Η ημέρα και ώρα έναρξης του παιχνιδιού.
+
+**Game stop**
+Η ημέρα και ώρα λήξης του παιχνιδιού.
+
+_Προσπάθειες παικτών καταχωρούνται από τους υπευθύνους των σταθμών μόνο εντός του διαστήματος που ορίζουν οι δύο προηγούμενες παράμετροι. Αν και δεν προτείνεται, η λήξη γίνεται να προσαρμοστεί και αφού ξεκινήσει το παιχνίδι._
+
+#### Πόντοι
+
+Μία ομάδα συλλέγει πόντους από κάθε σταθμό για κάθε δευτερόλεπτο που βρίσκεται υπό την κατοχή της. Επιπλέον, προστίθενται πόντοι για κάθε επιτυχημένη προσπάθεια παίκτη της: 
+
+**Success points**
+Οι πόντοι που κερδίζει μία ομάδα για κάθε επιτυχημένη προσπάθεια ενός παίκτη της.
+
+**Conquest points per minute**
+Οι πόντοι που κερδίζει μία ομάδα για κάθε λεπτό που έχει υπό την κατοχή της ένα σταθμό.
+
+TODO ratio coming from point source weights
+
+**Point increase rate per hour**
+Ο ρυθμός αύξησης της αξίας των πόντων, ανά ώρα.
+
+Η ρύθμιση αυτή παρέχεται για να διευκολύνει τις ανατροπές προς το τέλος του παιχνιδιού, χωρίς ωστόσο να καταργεί την αρχική προσπάθεια κάθε ομάδας.
+
+_Συγκεκριμένα, μία τιμή μεγαλύτερη της μονάδας αποδίδει μεγαλύτερη αξία στους πόντους που συλλέγει ένας παίκτης προς το τέλος του παιχνιδιού, σε σχέση με την αξία που θα είχαν οι πόντοι αν συλλέγονταν προς την αρχή του παιχνιδιού. Η αξία των πόντων στο τέλος του παιχνιδιού υπολογίζεται κάτω από το πεδίο εισόδου της παραμέτρου. Μία προτεινόμενη ρύθμιση είναι αυτή που διπλασιάζει την αξία των πόντων στο τέλος. Η λειτουργία αυτή απενεργοποιείται με μοναδιαία τιμή._
+
+#### Custom CSS
+
+Κανόνες CSS που εφαρμόζονται στις δημόσιες σελίδες του παιχνιδιού.
+
+Σίγουρα πρέπει να οριστεί ο χώρος που θα φαίνεται η συνολική κατάταξη, χρησιμοποιώντας την παρακάτω δήλωση, με ενδεχομένως προσαρμοσμένα ποσοστά:
 ```css
-@font-face {
-	font-family: PFSynchPro;
-	src: url(https://static.wfonts.com/data/2016/05/05/pf-synch-pro/PFSynchPro-Regular.ttf);
-	font-weight: normal;
-}
-
-@font-face {
-	font-family: PFSynchPro;
-	src: url(https://static.wfonts.com/data/2016/05/05/pf-synch-pro/PFSynchPro-Bold.ttf);
-	font-weight: bold;
-}
-
-:root {
-	--bs-body-font-family: PFSynchPro;
-}
-
 #canvas {
 	--canvas-top: 10%;
 	--canvas-left: 0%;
 	--canvas-right: 0%;
 	--canvas-width: 20%;
 }
+```
 
+Επιπλέον, μπορεί να εφαρμοστεί για παράδειγμα η γραμματοσειρά [PFSynchPro](https://www.wfonts.com/font/pf-synch-pro) με το εξής σύνολο κανόνων:
+```css
+@font-face {
+	font-family: PFSynchPro;
+	src: url(https://static.wfonts.com/data/2016/05/05/pf-synch-pro/PFSynchPro-Regular.ttf);
+	font-weight: normal;
+}
+@font-face {
+	font-family: PFSynchPro;
+	src: url(https://static.wfonts.com/data/2016/05/05/pf-synch-pro/PFSynchPro-Bold.ttf);
+	font-weight: bold;
+}
+:root {
+	--bs-body-font-family: PFSynchPro;
+}
+```
+
+Και να επιμηκυνθεί το εργαλείο ελέγχου του χρόνου στη σελίδα του timelapse:
+```css
 @media (min-width: 768px) {
 	body.timelapse #canvas #status-section {
 		width: 70%;
@@ -35,27 +93,11 @@ TODO game description and documentation
 }
 ```
 
-## translation
+#### Translation
 
-- `Count` how many candidates are left in the draw process
-- `Draw` draw action
-- `from` a player belongs to a team
-- `Game over!` game state
-- `Game start` game state
-- `Game stop` game state
-- `Hide` visibility toggle action
-- `Minimum successes` threshold of draw process
-- `Next` draw action
-- `Position` draw position
-- `Score` team ranking
-- `Show` visibility toggle action
-- `Speed` timelapse frames per second
-- `Submit` draw action
-- `Success` attempt type
-- `Success and Conquest` attempt type
-- `Success and Neutralization` attempt type
-- `Successes` list of attempts
-- `Time` timelapse progress
+Εξατομίκευση των λέξεων / φράσεων που εμφανίζονται στις δημόσιες σελίδες του παιχνιδιού.
+
+Προτείνεται μία παραμετροποίηση όπως η ακόλουθη:
 
 ```
 Count
@@ -115,3 +157,78 @@ Successes
 Time
 Χρόνος
 ```
+
+Σε κάθε περίπτωση, το κείμενο πρέπει να έχει αυτή τη δομή, δηλαδή την αρχική φράση, στην επόμενη γραμμή την μετάφραση, στη συνέχεια μία κενή γραμμή, κοκ.
+
+Οι λέξεις / φράσεις είναι οι παρακάτω, αν και δεν χρειάζεται να περιλαμβάνονται όλες στο πεδίο:
+
+- `Count` how many candidates are left in the draw process
+- `Draw` draw action
+- `from` a player belongs to a team
+- `Game over!` game state
+- `Game start` game state
+- `Game stop` game state
+- `Hide` visibility toggle action
+- `Minimum successes` threshold of draw process
+- `Next` draw action
+- `Position` draw position
+- `Score` team ranking
+- `Show` visibility toggle action
+- `Speed` timelapse frames per second
+- `Submit` draw action
+- `Success` attempt type
+- `Success and Conquest` attempt type
+- `Success and Neutralization` attempt type
+- `Successes` list of attempts
+- `Time` timelapse progress
+
+#### Map
+
+Η εικόνα πάνω στην οποία εμφανίζονται οι σταθμοί.
+
+_Επιτρέπεται ανέβασμα αρχείου εικόνας μέχρι 256KB. Παρόλο που δεν συνιστάται, επιτρέπεται να μην οριστεί χάρτης, οπότε οι σταθμοί θα εμφανίζονται κανονικά μέσα σε γκρίζο πλαίσιο._
+
+### Οντότητες
+
+#### Polygons
+
+#### Stations
+
+#### Teams
+
+#### Players
+
+### Λοιπές ενέργειες
+
+**Update password**
+Αλλαγή του διαχειριστικού κωδικού του παιχνιδιού.
+
+**Clone game**
+Αντιγραφή παιχνιδιού.
+
+TODO description and possible purpose
+
+**Truncate attempts**
+Διαγραφή όλων των καταχωρημένων προσπαθειών.
+
+_Προσοχή! Η ενέργεια είναι μη αναστρέψιμη._
+
+Ίσως έχει νόημα όταν πρόκειται να επαναληφθεί το παιχνίδι και δεν υπάρχει λόγος να δημιουργηθεί αντίγραφό του.
+
+**Delete game**
+Διαγραφή του παιχνιδιού.
+
+_Προσοχή! Η ενέργεια είναι μη αναστρέψιμη._
+
+Προτείνεται να εκτελεστεί μετά την ολοκλήρωση του παιχνιδιού και την παρουσίαση των αποτελεσμάτων του, καθώς με αυτό τον τρόπο καταστρέφονται δεδομένα όπως ονόματα παιδιών.
+Ταυτόχρονα, συμβάλλει στην εξοικονόμηση χώρου στον εξυπηρετητή φιλοξενίας της βάσης δεδομένων.
+
+## Δημόσιες σελίδες
+
+Ζωντανή αναμετάδοση
+
+Timelapse
+
+Κλήρωση
+
+## Υπεύθυνοι σταθμών
