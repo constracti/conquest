@@ -78,100 +78,13 @@ _Συγκεκριμένα, μία τιμή μεγαλύτερη της μονά�
 }
 ```
 
-Επιπλέον, μπορεί να εφαρμοστεί για παράδειγμα η γραμματοσειρά [PFSynchPro](https://www.wfonts.com/font/pf-synch-pro) με το εξής σύνολο κανόνων:
-```css
-@font-face {
-	font-family: PFSynchPro;
-	src: url(https://static.wfonts.com/data/2016/05/05/pf-synch-pro/PFSynchPro-Regular.ttf);
-	font-weight: normal;
-}
-@font-face {
-	font-family: PFSynchPro;
-	src: url(https://static.wfonts.com/data/2016/05/05/pf-synch-pro/PFSynchPro-Bold.ttf);
-	font-weight: bold;
-}
-:root {
-	--bs-body-font-family: PFSynchPro;
-}
-```
-
-Και να επιμηκυνθεί το εργαλείο ελέγχου του χρόνου στη σελίδα του timelapse:
-```css
-@media (min-width: 768px) {
-	body.timelapse #canvas #status-section {
-		width: 70%;
-	}
-}
-```
+_Στο παράρτημα παρατίθενται κανόνες για επιπρόσθετη τροποποίηση της εμφάνισης των σελίδων._
 
 #### Translation
 
 Εξατομίκευση των λέξεων / φράσεων που εμφανίζονται στις δημόσιες σελίδες του παιχνιδιού.
 
-Προτείνεται μία παραμετροποίηση όπως η ακόλουθη:
-
-```
-Count
-Υποψήφιοι
-
-Draw
-Κλήρωση
-
-from
-από
-
-Game over!
-Το παιχνίδι έχει λήξει!
-
-Game start
-Έναρξη παιχνιδιού
-
-Game stop
-Λήξη παιχνιδιού
-
-Hide
-Απόκρυψη
-
-Minimum successes
-Ελάχιστες επιτυχίες
-
-Next
-Συνέχεια
-
-Position
-Θέση
-
-Score
-Βαθμολογία
-
-Show
-Εμφάνιση
-
-Speed
-Ταχύτητα
-
-Submit
-Υποβολή
-
-Success
-Επιτυχία
-
-Success and Conquest
-Επιτυχία και Κατάκτηση
-
-Success and Neutralization
-Επιτυχία και Εξουδετέρωση
-
-Successes
-Επιτυχίες
-
-Time
-Χρόνος
-```
-
-Σε κάθε περίπτωση, το κείμενο πρέπει να έχει αυτή τη δομή, δηλαδή την αρχική φράση, στην επόμενη γραμμή την μετάφραση, στη συνέχεια μία κενή γραμμή, κοκ.
-
-Οι λέξεις / φράσεις είναι οι παρακάτω, αν και δεν χρειάζεται να περιλαμβάνονται όλες στο πεδίο:
+Οι λέξεις / φράσεις είναι οι παρακάτω, αν και δεν χρειάζεται να εντοπίζονται όλες στο πεδίο:
 
 - `Count` how many candidates are left in the draw process
 - `Draw` draw action
@@ -192,6 +105,8 @@ Time
 - `Success and Neutralization` attempt type
 - `Successes` list of attempts
 - `Time` timelapse progress
+
+_Μία προτεινόμενη παραμετροποίηση περιλαμβάνεται στο παράρτημα._
 
 #### Map
 
@@ -351,6 +266,8 @@ _Επιλέγεται ένα ελάχιστο κατώφλι, για να εξα
 
 ## Παράρτημα
 
+### Συντελεστές πόντων
+
 Ακολουθεί μία απλουστευτική στάθμιση των συντελεστών πόντων ανά επιτυχία $r_S$ και ανά λεπτό κατάκτησης $r_C$.
 
 Ονομάζοντας:
@@ -364,3 +281,94 @@ _Επιλέγεται ένα ελάχιστο κατώφλι, για να εξα
 $$ \frac{r_S}{r_C} = \frac{w_S}{w_C} \cdot \frac{d_G}{60 \frac{\text{sec}}{\text{min}}} \cdot \frac{p_C}{p_S} $$
 
 Αντικαθιστώντας τις ενδεικτικές τιμές, προκύπτει $r_S : r_C = 3 \text{pts} : 14 \frac{\text{pts}}{\text{min}}$.
+
+### Κανόνες CSS
+
+Μπορεί να εφαρμοστεί για παράδειγμα η γραμματοσειρά [PFSynchPro](https://www.wfonts.com/font/pf-synch-pro) με το εξής σύνολο κανόνων:
+```css
+@font-face {
+	font-family: PFSynchPro;
+	src: url(https://static.wfonts.com/data/2016/05/05/pf-synch-pro/PFSynchPro-Regular.ttf);
+	font-weight: normal;
+}
+@font-face {
+	font-family: PFSynchPro;
+	src: url(https://static.wfonts.com/data/2016/05/05/pf-synch-pro/PFSynchPro-Bold.ttf);
+	font-weight: bold;
+}
+:root {
+	--bs-body-font-family: PFSynchPro;
+}
+```
+
+Και να επιμηκυνθεί το εργαλείο ελέγχου του χρόνου στη σελίδα του timelapse:
+```css
+@media (min-width: 768px) {
+	body.timelapse #canvas #status-section {
+		width: 70%;
+	}
+}
+```
+
+### Προτεινόμενη μετάφραση
+
+Προτείνεται μία παραμετροποίηση όπως η ακόλουθη:
+
+```
+Count
+Υποψήφιοι
+
+Draw
+Κλήρωση
+
+from
+από
+
+Game over!
+Το παιχνίδι έχει λήξει!
+
+Game start
+Έναρξη παιχνιδιού
+
+Game stop
+Λήξη παιχνιδιού
+
+Hide
+Απόκρυψη
+
+Minimum successes
+Ελάχιστες επιτυχίες
+
+Next
+Συνέχεια
+
+Position
+Θέση
+
+Score
+Βαθμολογία
+
+Show
+Εμφάνιση
+
+Speed
+Ταχύτητα
+
+Submit
+Υποβολή
+
+Success
+Επιτυχία
+
+Success and Conquest
+Επιτυχία και Κατάκτηση
+
+Success and Neutralization
+Επιτυχία και Εξουδετέρωση
+
+Successes
+Επιτυχίες
+
+Time
+Χρόνος
+```
