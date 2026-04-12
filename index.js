@@ -71,6 +71,7 @@ function render() {
 	render_team();
 	render_player();
 	attempt_truncate.disabled = state.attempt_list.length === 0;
+	station_link.href = `station.html?game=${state.game.name}`;
 	live_link.href = `live.html?game=${state.game.name}`;
 	timelapse_link.href = `timelapse.html?game=${state.game.name}`;
 }
@@ -1325,6 +1326,11 @@ const import_cancel = document.getElementById('import-cancel');
 import_cancel.addEventListener('click', () => {
 	import_modal.hide();
 });
+
+/**
+ * @type {HTMLAnchorElement}
+ */
+const station_link = document.getElementById('station-link');
 
 /**
  * @type {HTMLAnchorElement}
