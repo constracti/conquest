@@ -185,6 +185,7 @@ function render() {
 		const type = state.attempt_type_map.get(attempt.id);
 		if (type !== null && type !== 'Failure')
 			score_map_by_team.set(attempt.team, score_map_by_team.get(attempt.team) + score_success(state.game, attempt.time));
+		// TODO maybe multiply by station capacity
 	});
 	// score from conquests
 	state.conquest_list.forEach(conquest => {
