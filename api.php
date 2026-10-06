@@ -51,19 +51,17 @@ function stmt_bool(mysqli_stmt $stmt): bool {
 
 // file system
 
-function check_file(string $file_name, string $mime_type, int $max_size): bool {
+function check_file(string $file_name, string $file_ext, array $ext_list, int $max_size): bool {
 	// file_name
 	if (!file_exists($file_name))
 		exit('check_file: file_exists');
 	if (!is_file($file_name))
 		exit('check_file: is_file');
-	// mime_type
-	if ($mime_type !== 'image')
-		exit('check_file: mime_type');
-	$type = mime_content_type($file_name);
-	if ($type === FALSE)
-		exit('check_file: mime_content_type');
-	if (!str_starts_with($type, $mime_type . '/'))
+	// ext_list
+	if (count($ext_list) !== 2 || $ext_list[0] !== 'png' || $ext_list[1] !== 'jpg')
+		exit('check_file: ext_list');
+	$file_ext = mb_strtolower($file_ext);
+	if (!in_array($file_ext, $ext_list, TRUE))
 		return FALSE;
 	// max_size
 	$size = filesize($file_name);
@@ -742,9 +740,10 @@ if (is_post('game_map_insert')) {
 	if (!is_null($game['map']))
 		exit('id');
 	$map = post_file('map');
-	if (!check_file($map['tmp_name'], 'image', 256 * 1024))
+	$ext = pathinfo($map['name'], PATHINFO_EXTENSION);
+	if (!check_file($map['tmp_name'], $ext, ['png', 'jpg'], 256 * 1024))
 		exit('map');
-	$map = move_file($map['tmp_name'], 'maps', sprintf('%s-%d.%s', $game['name'], time(), pathinfo($map['name'], PATHINFO_EXTENSION)));
+	$map = move_file($map['tmp_name'], 'maps', sprintf('%s-%d.%s', $game['name'], time(), $ext));
 	game_map_update($id, $map);
 	json(game_select_by_id($id));
 }

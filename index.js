@@ -178,7 +178,7 @@ function render_map() {
 							required: true,
 							type: 'file',
 							custom: element => {
-								element.accept = 'image/*';
+								element.accept = '.png, .jpg';
 							},
 						}),
 					],
